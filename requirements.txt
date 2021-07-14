@@ -1,0 +1,15 @@
+plotly==5.1.0
+Markdown==3.3.4
+pandas==1.2.4
+tzlocal==2.1
+tabulate==0.8.9
+numpy==1.19.5
+streamlit==0.84.0
+lxml==4.6.2
+requests==2.25.1
+matplotlib==3.4.2
+yahoo_fin==0.8.8
+yfinance==0.1.62
+alpha_vantage==2.3.1
+cufflinks==0.17.3
+beautifulsoup4==4.9.3
