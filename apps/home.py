@@ -151,7 +151,7 @@ def app():
                         xNewsImage = image['src']
                         xList.append(xNewsImage)
                         print ('NewsImage: ' + xNewsImage)
-
+    
                 xList2.append(xList)
 
 
@@ -185,7 +185,11 @@ def News(xIdx, xList2):
     news1, news2 = st.beta_columns([1,5])
 
     with news1:
-        st.image(xList2[xIdx][4])
+        try:
+            st.image(xList2[xIdx][4])
+        except:
+            st.image('https://cdn.pixabay.com/photo/2016/10/10/22/38/business-1730089_1280.jpg')
+
     with news2: 
         source = xList2[xIdx][0]
         text = xList2[xIdx][1]
