@@ -5,8 +5,8 @@ from multiapp import MultiApp
 from apps import home, stock_summary, sentiment     # import your app modules here
 
 st.set_page_config(
-    # page_title="hvFinance",
-    # page_icon="chart_with_upwards_trend",
+    page_title="hvFinance",
+    page_icon="chart_with_upwards_trend",
     layout="wide",
 )
 
