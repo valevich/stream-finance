@@ -8,8 +8,7 @@ from tabulate import tabulate
 import time
 from datetime import datetime
 import tzlocal
-import lxml.html
-
+import html5lib
 
 #================================================================================
 #                         YAHOO FINANCE                                         #
