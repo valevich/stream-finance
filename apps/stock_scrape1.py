@@ -661,39 +661,26 @@ def getData_Reddit():
     }
 
     local_time2 = ''
-    xList3 = []
     try:
 
-        xList3.append('=1,')
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
         # text = soup.get_text()
 
 
-        xList3.append('=1a,')
         test = soup.find("p", {"id": "unixtime_p"}).text.strip()
-        xList3.append('=1b,')
         test = test[11:]
-        xList3.append('=1c,')
         unix_timestamp = float(test)
-        xList3.append('=1d,')
         local_timezone = tzlocal.get_localzone() # get pytz timezone
-        xList3.append('=1e,')
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        xList3.append('=1f,')
         local_time2 = str(local_time)[:-6]
-        xList3.append('=1g,')
         # print ('As Of Time: ' + local_time)
 
-        xList3.append('=2,')
         trend_table = soup.find(class_='trending_table')
 
-        xList3.append('=3,')
         df1 = pd.read_html(str(trend_table))
-        xList3.append('=4,')
         df1 = df1[0]
 
-        xList3.append('=5,')
         xRows = len(df1.index)
         xTotal = ''
         xBuy = ''
@@ -702,28 +689,20 @@ def getData_Reddit():
 
 
         for index in range(xRows)[1:]:          # [1:] - To skip first row
-            xList3.append('=6,')
             prices = soup.find_all("tr")
             xCntr = 1
             for x in prices[index].find_all("td"):  #.text.strip().split("\n")
                 if xCntr == 1:
-                    xList3.append('=7,')
                     xTotal = str(x.get_text().strip())
                 elif xCntr == 2:
-                    xList3.append('=8,')
                     xBuy = str(x.get_text().strip())
                 elif xCntr == 3:
-                    xList3.append('=9,')
                     xTicker = str(x.get_text().strip())
                 xCntr += 1
 
-            xList3.append('=10,')
             xString = str(x)
-            xList3.append('=11,')
             xCompany = xString[+4:xString.find("<br/>")]
-            xList3.append('=12,')
             xIndustry = xString[xString.find("<br/>")+5:xString.find("</td>")]
-            xList3.append('=13,')
             xBuyList = str(xBuy).split()             # split string into list and remove any spaces
 
             # print('Ticker: '+ str(xTicker))
@@ -734,7 +713,6 @@ def getData_Reddit():
             # print('Hold: '+ xBuyList[2])
             # print('Total: '+ str(xTotal))
 
-            xList3.append('=14,')
             xList = []
             xList.append(xTicker)
             xList.append(xCompany)
@@ -745,7 +723,6 @@ def getData_Reddit():
             xList.append(xTotal)
             xList2.append(xList) 
 
-        xList3.append('=15,')
         df = pd.DataFrame(xList2)
         df.columns =['Ticker', 'Company', 'Industry', 'Buy', 'Sell', 'Hold', 'Total']
         print (tabulate(df, headers='keys', tablefmt='psql', showindex=False))
@@ -758,7 +735,7 @@ def getData_Reddit():
         pass
 
 
-    return df, local_time2, xList3
+    return df, local_time2
 
 
 
