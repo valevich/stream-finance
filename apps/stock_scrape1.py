@@ -683,7 +683,7 @@ def getData_Reddit():
         xList3.append('=1f,')
         local_time2 = str(local_time)[:-6]
         xList3.append('=1g,')
-        print ('As Of Time: ' + local_time)
+        # print ('As Of Time: ' + local_time)
 
         xList3.append('=2,')
         trend_table = soup.find(class_='trending_table')
