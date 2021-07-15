@@ -660,7 +660,7 @@ def getData_Reddit():
     'Connection' : 'close'
     }
 
-    local_time = ''
+    local_time2 = ''
     try:
 
         page = requests.get(url, headers=headers) 
@@ -672,7 +672,7 @@ def getData_Reddit():
         unix_timestamp = float(test)
         local_timezone = tzlocal.get_localzone() # get pytz timezone
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        local_time = str(local_time)[:-6]
+        local_time2 = str(local_time)[:-6]
         print ('As Of Time: ' + local_time)
 
         trend_table = soup.find(class_='trending_table')
@@ -734,7 +734,7 @@ def getData_Reddit():
         pass
 
 
-    return df, local_time
+    return df, local_time2
 
 
 
