@@ -8,6 +8,7 @@ from tabulate import tabulate
 import time
 from datetime import datetime
 import tzlocal
+import lxml.html
 
 
 #================================================================================
@@ -666,8 +667,8 @@ def getData_Reddit():
         page = requests.get(url, headers=headers) 
         # print ('=0')
         # soup = BeautifulSoup(page.text, 'lxml')
-        # soup = BeautifulSoup(page.text, 'html5lib')
-        soup = BeautifulSoup(page.text, 'html.parser')
+        soup = BeautifulSoup(page.text, 'html5lib')
+        # soup = BeautifulSoup(page, 'html.parser')
         # text = soup.get_text()
 
 
@@ -722,6 +723,10 @@ def getData_Reddit():
 
             # print ('=6')
             # print ('xString: ' + str(x))
+            # for br in x.find_all("br"):
+            #     br.replace_with("xxxxxx")
+            print ('xString: ' + str(x))
+            x2 = str(x).replace("&amp;", "&")
             x2 = str(x).replace("&amp;", "&")
             # print (x2)
 
