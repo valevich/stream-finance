@@ -667,13 +667,13 @@ def getData_Reddit():
         soup = BeautifulSoup(page.text, 'html5lib') 
         # text = soup.get_text()
 
-        test = soup.find("p", {"id": "unixtime_p"}).text.strip()
-        test = test[11:]
-        unix_timestamp = float(test)
-        local_timezone = tzlocal.get_localzone() # get pytz timezone
-        local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        local_time2 = str(local_time)[:-6]
-        print ('As Of Time: ' + local_time)
+        # test = soup.find("p", {"id": "unixtime_p"}).text.strip()
+        # test = test[11:]
+        # unix_timestamp = float(test)
+        # local_timezone = tzlocal.get_localzone() # get pytz timezone
+        # local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
+        # local_time2 = str(local_time)[:-6]
+        # print ('As Of Time: ' + local_time)
 
         trend_table = soup.find(class_='trending_table')
 
