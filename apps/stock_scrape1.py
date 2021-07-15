@@ -664,8 +664,8 @@ def getData_Reddit():
     try:
 
         page = requests.get(url, headers=headers) 
-        # soup = BeautifulSoup(page.text, 'lxml')
-        soup = BeautifulSoup(page.text, 'html5lib')
+        soup = BeautifulSoup(page.text, 'lxml')
+        # soup = BeautifulSoup(page.text, 'html5lib')
         # text = soup.get_text()
 
 
