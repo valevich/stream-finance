@@ -660,6 +660,7 @@ def getData_Reddit():
     'Connection' : 'close'
     }
 
+    local_time = ''
     try:
 
         page = requests.get(url, headers=headers) 
