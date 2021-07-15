@@ -665,8 +665,8 @@ def getData_Reddit():
 
         page = requests.get(url, headers=headers) 
         # print ('=0')
-        soup = BeautifulSoup(page.text, 'lxml')
-        # soup = BeautifulSoup(page.text, 'html5lib')
+        # soup = BeautifulSoup(page.text, 'lxml')
+        soup = BeautifulSoup(page.text, 'html5lib')
         # text = soup.get_text()
 
 
@@ -704,6 +704,7 @@ def getData_Reddit():
             prices = soup.find_all("tr")
             xCntr = 1
             for x in prices[index].find_all("td"):  #.text.strip().split("\n")
+                print ('x: ' + str(x))
                 # print ('=5')
                 if xCntr == 1:
                     xTotal = str(x.get_text().strip())
@@ -714,6 +715,8 @@ def getData_Reddit():
                 elif xCntr == 3:
                     xTicker = str(x.get_text().strip())
                     # print (xTicker)
+                # elif xCntr == 4:
+                #     print ('xString##: ' + str(x))
                 xCntr += 1
 
             # print ('=6')
@@ -721,10 +724,11 @@ def getData_Reddit():
             x2 = str(x).replace("&amp;", "&")
             # print (x2)
 
-            xString = str(x2)
+            xString = x2
             # print ('=6b')
 
             # print (xString)
+
             # print ('=6c')
             xCompany = xString[+4:xString.find("<br/>")]
             # print ('=7')

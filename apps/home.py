@@ -168,7 +168,7 @@ def app():
     sp = SectorPerformances(key='0E66O7ZP6W7A1LC9', output_format='pandas')
     plt.figure(figsize=(8,8))
     data, meta_data = sp.get_sector()
-    print(meta_data)
+    # print(meta_data)
     data['Rank D: Month Performance'].plot(kind='bar')
     plt.title('30 Days Stock Market Performance (%) per Sector')
     plt.tight_layout()
