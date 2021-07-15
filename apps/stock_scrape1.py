@@ -664,24 +664,34 @@ def getData_Reddit():
     try:
 
         page = requests.get(url, headers=headers) 
-        soup = BeautifulSoup(page.text, 'lxml')
-        # soup = BeautifulSoup(page.text, 'html5lib')
+        print ('=0')
+        # soup = BeautifulSoup(page.text, 'lxml')
+        soup = BeautifulSoup(page.text, 'html5lib')
         # text = soup.get_text()
 
 
+        print ('=0a')
         test = soup.find("p", {"id": "unixtime_p"}).text.strip()
+        print ('=0b')
         test = test[11:]
+        print ('=0c')
         unix_timestamp = float(test)
+        print ('=0d')
         local_timezone = tzlocal.get_localzone() # get pytz timezone
+        print ('=0e')
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
+        print ('=0f')
         local_time2 = str(local_time)[:-6]
         # print ('As Of Time: ' + local_time)
 
+        print ('=1')
         trend_table = soup.find(class_='trending_table')
 
+        print ('=2')
         df1 = pd.read_html(str(trend_table))
         df1 = df1[0]
 
+        print ('=3')
         xRows = len(df1.index)
         xTotal = ''
         xBuy = ''
@@ -690,20 +700,36 @@ def getData_Reddit():
 
 
         for index in range(xRows)[1:]:          # [1:] - To skip first row
+            print ('=4')
             prices = soup.find_all("tr")
             xCntr = 1
             for x in prices[index].find_all("td"):  #.text.strip().split("\n")
+                print ('=5')
                 if xCntr == 1:
                     xTotal = str(x.get_text().strip())
+                    print (xTotal)
                 elif xCntr == 2:
                     xBuy = str(x.get_text().strip())
+                    print (xCntr)
                 elif xCntr == 3:
                     xTicker = str(x.get_text().strip())
+                    print (xTicker)
                 xCntr += 1
 
-            xString = str(x)
+            print ('=6')
+            print ('xString: ' + str(x))
+            x2 = str(x).replace("&amp;", "&")
+            print (x2)
+
+            xString = str(x2)
+            print ('=6b')
+
+            print (xString)
+            print ('=6c')
             xCompany = xString[+4:xString.find("<br/>")]
+            print ('=7')
             xIndustry = xString[xString.find("<br/>")+5:xString.find("</td>")]
+            print ('=8')
             xBuyList = str(xBuy).split()             # split string into list and remove any spaces
 
             # print('Ticker: '+ str(xTicker))
