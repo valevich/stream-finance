@@ -670,12 +670,19 @@ def getData_Reddit():
         # text = soup.get_text()
 
 
+        xList3.append('=1a,')
         test = soup.find("p", {"id": "unixtime_p"}).text.strip()
+        xList3.append('=1b,')
         test = test[11:]
+        xList3.append('=1c,')
         unix_timestamp = float(test)
+        xList3.append('=1d,')
         local_timezone = tzlocal.get_localzone() # get pytz timezone
+        xList3.append('=1e,')
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
+        xList3.append('=1f,')
         local_time2 = str(local_time)[:-6]
+        xList3.append('=1g,')
         print ('As Of Time: ' + local_time)
 
         xList3.append('=2,')
