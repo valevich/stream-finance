@@ -10,6 +10,13 @@ st.set_page_config(
     layout="wide",
 )
 
+#---------- Hide Streamlit Hamburger Menu -----------
+st.markdown(""" <style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style> """, unsafe_allow_html=True)
+
+
 app = MultiApp()
 
 # Add all your application here
