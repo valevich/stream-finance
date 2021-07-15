@@ -141,6 +141,7 @@ def app():
             # st.sidebar.markdown('---')
 
             df5, asOfTime, xList3 = getData_Reddit()
+            st.write (xList3)
 
             xTimeLine = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 10;line-height: 2px; font-size: 14px;">Last updated: {asOfTime}</p>'
             st.markdown(xTimeLine, unsafe_allow_html=True)
