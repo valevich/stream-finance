@@ -22,7 +22,7 @@ app = MultiApp()
 # Add all your application here
 app.add_app("Home", home.app)
 app.add_app("Stock Analysis", stock_summary.app)
-app.add_app("Market Sentiment", sentiment.app)
+app.add_app("Market", sentiment.app)
 
 
 # The main app

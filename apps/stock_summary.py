@@ -17,6 +17,7 @@ import cufflinks as cf
 from datetime import date
 import markdown
 
+
 from apps.stock_scrape1 import getData_Zacks
 from apps.stock_scrape1 import getData_Dividata
 from apps.stock_scrape1 import getData_Tipranks
@@ -71,49 +72,6 @@ def app():
 
 
 
-    # #------ Function to DISPLAY SIDEBAR VALUES
-    # def display_summary(symbol):
-    #     info = get_info(symbol)
-    #     price = get_price(symbol)
-
-    #     row = \
-    #     f"""<div> 
-    #             <span style='float: left;line-height: 16px; font-size:14px'><b>{"Today's Price: "}</b></span>
-    #             <span style='float: right;line-height: 16px; font-size:18px'><b>{price[0]}</b></span>
-    #         </div>
-    #     """
-    #     st.sidebar.markdown(row, unsafe_allow_html=True)
-        
-    #     if price[1][0:1] == '+':
-    #         row = \
-    #         f"""<div> 
-    #                 <span style='float: left; line-height: 16px; font-size:14px'><b>{"Today's Change: "}</b></span>
-    #                 <span style='float: right; color: green; line-height: 16px; font-size:14px'><b>{price[1]}</b></span>
-    #             </div>
-    #         """
-    #     else:
-    #         row = \
-    #         f"""<div> 
-    #                 <span style='float: left; line-height: 16px; font-size:14px'><b>{"Today's Change: "}</b></span>
-    #                 <span style='float: right; color: red; line-height: 16px; font-size:14px'><b>{price[1]}</b></span>
-    #             </div>
-    #         """
-    #     st.sidebar.markdown(row, unsafe_allow_html=True)
-        
-
-    #     info_names = ["Close Price: ", "Open Price: ", "52-Week Range: ", "Dividend Rate & Yield: ", \
-    #         "Market Cap: ", "PE Ratio: ", "EPS: "]
-    #     for name,infoValue in zip(info_names, info):
-    #         row = \
-    #         f"""<div> 
-    #                 <span style='float: left;line-height: 16px; font-size:14px'><b>{name}</b></span>
-    #                 <span style='float: right;line-height: 16px; font-size:14px'> {infoValue}</span>
-    #             </div>
-    #         """
-    #         st.sidebar.markdown(row, unsafe_allow_html=True)
-    #     st.sidebar.markdown("---")
-
-
     #------ Function to DISPLAY TICKER VALUES
     def display_summary(symbol):
         info = get_info(symbol)
@@ -166,170 +124,170 @@ def app():
     # tickers = list(alltickers_df['Symbol'])
 
     # st.sidebar.markdown("""<h2 style='text-align: center;'>SEARCH 🔎</h2>""", unsafe_allow_html=True)
-    symbol = st.sidebar.text_input('Stock Symbol', value = 'AAPL') #search box
+    with st.spinner('Loading Data...Please Wait...'):
+        symbol = st.sidebar.text_input('Stock Symbol', value = 'AAPL') #search box
 
-    ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(symbol)
 
-    if not symbol.isupper():
-        symbol = symbol.upper()
+        if not symbol.isupper():
+            symbol = symbol.upper()
 
-    # if no ticker entered
-    if not symbol: 
-        st.sidebar.markdown('')
-        st.sidebar.markdown("""<div style='text-align: center;'>Please search a ticker to see results.</div>""", unsafe_allow_html=True)
-    else: 
-        # Sidebar
-        st.sidebar.markdown('---')
-        # display_summary(symbol)
+        # if no ticker entered
+        if not symbol: 
+            st.sidebar.markdown('')
+            st.sidebar.markdown("""<div style='text-align: center;'>Please search a ticker to see results.</div>""", unsafe_allow_html=True)
+        else: 
+            # Sidebar
+            st.sidebar.markdown('---')
+            # display_summary(symbol)
 
 
     #---------------  TOP HEADER  -------------------
-    with st.spinner('Loading Data...Please Wait...'):
 
-        #---------------  Header Market Data  -------------------
-        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
-        if len(df_mw1.index) > 0:
-            # new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com Markets</p>'
-            # st.markdown(new_title, unsafe_allow_html=True)
-            # st.table(df_mw1.assign(hack='').set_index('hack'))
+    #---------------  Header Market Data  -------------------
+    df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+    if len(df_mw1.index) > 0:
+        # new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com Markets</p>'
+        # st.markdown(new_title, unsafe_allow_html=True)
+        # st.table(df_mw1.assign(hack='').set_index('hack'))
 
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
-            #---------------  Dow  -------------------
-            with col1:
-                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[0]['Value']
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
-                xColor = 'black'
-                if '-' in df_mw1.iloc[0]['Change']:
-                    xColor = 'red'
-                else:
-                    xColor = 'green'
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-            #---------------  S&P 500  -------------------
-            with col2:
-                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>S&P 500</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[1]['Value']
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[1]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
-                xColor = 'black'
-                if '-' in df_mw1.iloc[1]['Change']:
-                    xColor = 'red'
-                else:
-                    xColor = 'green'
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
+        buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+        #---------------  Dow  -------------------
+        with col1:
+            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[0]['Value']
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            xColor = 'black'
+            if '-' in df_mw1.iloc[0]['Change']:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+        #---------------  S&P 500  -------------------
+        with col2:
+            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>S&P 500</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[1]['Value']
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[1]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+            xColor = 'black'
+            if '-' in df_mw1.iloc[1]['Change']:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
 
-            #---------------  Nasdaq  -------------------
-            with col3:
-                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Nasdaq</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[2]['Value']
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw1.iloc[2]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
-                xColor = 'black'
-                if '-' in df_mw1.iloc[2]['Change']:
-                    xColor = 'red'
-                else:
-                    xColor = 'green'
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-            #---------------  Gold  -------------------
-            with col4:
-                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gold</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw2.iloc[0]['Value']
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw2.iloc[0]['Change'] + " (" + df_mw2.iloc[0]['Change %'] + " )"
-                xColor = 'black'
-                if '-' in df_mw2.iloc[0]['Change']:
-                    xColor = 'red'
-                else:
-                    xColor = 'green'
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-            #---------------  Oil  -------------------
-            with col5:
-                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Oil</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw2.iloc[1]['Value']
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
-                x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
-                xColor = 'black'
-                if '-' in df_mw1.iloc[1]['Change']:
-                    xColor = 'red'
-                else:
-                    xColor = 'green'
-                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
-                st.markdown(row, unsafe_allow_html=True)
+        #---------------  Nasdaq  -------------------
+        with col3:
+            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Nasdaq</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[2]['Value']
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw1.iloc[2]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+            xColor = 'black'
+            if '-' in df_mw1.iloc[2]['Change']:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+        #---------------  Gold  -------------------
+        with col4:
+            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gold</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw2.iloc[0]['Value']
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw2.iloc[0]['Change'] + " (" + df_mw2.iloc[0]['Change %'] + " )"
+            xColor = 'black'
+            if '-' in df_mw2.iloc[0]['Change']:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+        #---------------  Oil  -------------------
+        with col5:
+            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Oil</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw2.iloc[1]['Value']
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
+            xColor = 'black'
+            if '-' in df_mw1.iloc[1]['Change']:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
 
-        st.write ('\n\n\n\n')
+    st.write ('\n\n\n\n')
 
-        # Main Page Header 
-        st.markdown("""<div style='text-align: center;'><h3><b>THE STOCK ANALYSIS</b></h1></div>""", unsafe_allow_html=True)
-        st.markdown("---")
-        # st.markdown("")
-
-
-        #---------------  2 Header Column Section  -------------------
-        if symbol: 
-            hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
-            with hdr1:
-                if ticker.info['logo_url']:
-                    st.image(ticker.info['logo_url'])
-            with hdr2: 
-                try:
-                    st.subheader(ticker.info['longName'])
-                    xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
-                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
-                    st.markdown(row, unsafe_allow_html=True)
-                except:
-                    pass
-            with hdr3:
-                display_summary(symbol)
-
-            summ = ticker.info['longBusinessSummary']
-            with st.beta_expander(f'Description: {summ[0:250]} ... Read more'):
-                st.markdown(f'<p class="small-font"> {summ} !!</p>', unsafe_allow_html=True)
-
-        st.write ('\n\n')
+    # Main Page Header 
+    st.markdown("""<div style='text-align: center;'><h3><b>THE STOCK ANALYSIS</b></h1></div>""", unsafe_allow_html=True)
+    st.markdown("---")
+    # st.markdown("")
 
 
-        #---------------  LOAD YFINANCE DATA FOR 'SPY'  -------------------
-        spy = yf.Ticker('SPY')
-        spy_df = spy.history(period = '1y',interval='1d')
-        spy_df.reset_index(inplace = True)
-        # Get Percentage Return 
-        r = [0]
-        for i in range(1,len(spy_df)):
-            val = (spy_df.Close[i] - spy_df.Close[0]) / spy_df.Close[0] *100
-            r.append(val)
-        spy_df['Return'] = r 
+    #---------------  2 Header Column Section  -------------------
+    if symbol: 
+        hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
+        with hdr1:
+            if ticker.info['logo_url']:
+                st.image(ticker.info['logo_url'])
+        with hdr2: 
+            try:
+                st.subheader(ticker.info['longName'])
+                xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
+                row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
+                st.markdown(row, unsafe_allow_html=True)
+            except:
+                pass
+        with hdr3:
+            display_summary(symbol)
+
+        summ = ticker.info['longBusinessSummary']
+        with st.beta_expander(f'Description: {summ[0:250]} ... Read more'):
+            st.markdown(f'<p class="small-font"> {summ} !!</p>', unsafe_allow_html=True)
+
+    st.write ('\n\n')
 
 
-        #---------------  LOAD YFINANCE DATA FOR TICKER VARIABLE  -------------------
-        df = ticker.history(period = '1y',interval='1d')
-        df.reset_index(inplace=True)
-        # Percentage return for Ticker 
-        r = [0]
-        for i in range(1,len(df)):
-            val = (df.Close[i] - df.Close[0]) / df.Close[0] *100
-            r.append(val)
-        df['Return'] = r 
+    #---------------  LOAD YFINANCE DATA FOR 'SPY'  -------------------
+    spy = yf.Ticker('SPY')
+    spy_df = spy.history(period = '1y',interval='1d')
+    spy_df.reset_index(inplace = True)
+    # Get Percentage Return 
+    r = [0]
+    for i in range(1,len(spy_df)):
+        val = (spy_df.Close[i] - spy_df.Close[0]) / spy_df.Close[0] *100
+        r.append(val)
+    spy_df['Return'] = r 
 
 
-        new_df = pd.DataFrame(columns=['Date', 'SPY Return', f'{symbol} Return'])
-        new_df['Date'] = spy_df.Date
-        new_df['SPY Return'] = spy_df.Return
-        new_df[f'{symbol} Return'] = df.Return
+    #---------------  LOAD YFINANCE DATA FOR TICKER VARIABLE  -------------------
+    df = ticker.history(period = '1y',interval='1d')
+    df.reset_index(inplace=True)
+    # Percentage return for Ticker 
+    r = [0]
+    for i in range(1,len(df)):
+        val = (df.Close[i] - df.Close[0]) / df.Close[0] *100
+        r.append(val)
+    df['Return'] = r 
+
+
+    new_df = pd.DataFrame(columns=['Date', 'SPY Return', f'{symbol} Return'])
+    new_df['Date'] = spy_df.Date
+    new_df['SPY Return'] = spy_df.Return
+    new_df[f'{symbol} Return'] = df.Return
 
 
 
@@ -429,8 +387,8 @@ def app():
 
 
     #---------------  Technicals Selection  -------------------
-    with st.spinner('Loading Data...Please Wait...'):
-        if st.sidebar.checkbox("Technicals"):
+    if st.sidebar.checkbox("Technicals"):
+        with st.spinner('Loading Data...Please Wait...'):
             if symbol: 
 
                 #--------  Display Price/MA, MACD and RSI ----------------- 
@@ -529,8 +487,8 @@ def app():
 
 
     #---------------  Fundamentals Selection  -------------------
-    with st.spinner('Loading Data...Please Wait...'):
-        if st.sidebar.checkbox("Fundamentals"):
+    if st.sidebar.checkbox("Fundamentals"):
+        with st.spinner('Loading Data...Please Wait...'):
             if symbol: 
                 st.header(f'{symbol.upper()} Fundamentals')
                 choice = st.sidebar.selectbox('Quarterly or Yearly Financials',['Yearly','Quarterly'])
@@ -577,8 +535,8 @@ def app():
 
 
     #---------------  Analyst Recommendations  -------------------
-    with st.spinner('Loading Data...Please Wait...'):
-        if st.sidebar.checkbox("Analyst Ratings"):
+    if st.sidebar.checkbox("Analyst Ratings"):
+        with st.spinner('Loading Data...Please Wait...'):
             if symbol: 
 
                 if type(ticker.recommendations) != type(None):
@@ -679,5 +637,94 @@ def app():
                     fig.update_layout(margin=dict(l=60,r=1,b=1,t=10))
 
                     st.write(fig)
+
+
+    if st.sidebar.checkbox("Add'l Sources"):
+        if symbol: 
+
+            st.markdown('---')
+            row = '<p style="font-family:sans-serif; line-height: 14px; font-size: 16px;"><b>Research Ticker on any resources listed below:</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+            st.markdown('\n')
+
+            #-----------------------  LINE 1  ------------------------------------
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            with col1:
+                link = f'[Yahoo Finance](https://finance.yahoo.com/quote/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col2:
+                link = f'[Zacks](https://www.zacks.com/stock/quote/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col3:
+                link = f'[StockRSI](https://www.stockrsi.com/{symbol.lower()}/)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col4:
+                link = f'[Dividend Channel](https://www.dividendchannel.com/history/?symbol={symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col5:
+                link = f'[Morningstar Stocks](https://www.morningstar.com/stocks/xnas/{symbol}/quote)'
+                st.markdown(link, unsafe_allow_html=True)
+
+
+            #-----------------------  LINE 2  ------------------------------------
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            with col1:
+                link = f'[MarketWatch](https://www.marketbeat.com/stocks/NYSE/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col2:
+                link = f'[TradersPro](https://www.traderspro.com/#/stockAnalysis/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col3:
+                link = f'[TipRanks](https://www.tipranks.com/stocks/{symbol}/forecast)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col4:
+                link = f'[DiviData](https://dividata.com/stock/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col5:
+                link = f'[Morningstar ETFs](https://www.morningstar.com/etfs/arcx/{symbol}/quote)'
+                st.markdown(link, unsafe_allow_html=True)
+
+
+            #-----------------------  LINE 3  ------------------------------------
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            with col1:
+                link = f'[StockTwits](https://stocktwits.com/symbol/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col2:
+                link = f'[Finviz](https://finviz.com/quote.ashx?t={symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col3:
+                link = f'[StockConsultant](https://www.stockconsultant.com/consultnow/basicplus.cgi?symbol={symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col4:
+                link = f'[ChartMill](https://www.chartmill.com/stock/quote/{symbol}/profile)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col5:
+                link = f'[Morningstar Funds](https://www.morningstar.com/funds/xnas/{symbol}/quote)'
+                st.markdown(link, unsafe_allow_html=True)
+
+
+            #-----------------------  LINE 4  ------------------------------------
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            with col1:
+                link = f'[ValueLine](https://research.valueline.com/research#list=recent&sec=company&sym={symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col2:
+                link = f'[StockInvest](https://stockinvest.us/stock/{symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            with col3:
+                link = f'[Barchart](https://www.barchart.com/stocks/quotes/{symbol}/overview)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col4:
+                link = f'[Financhill](https://financhill.com/stock-price-chart/{symbol}-technical-analysis)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col5:
+                link = f'[CNBC](https://www.cnbc.com/quotes/{symbol}/)'
+                st.markdown(link, unsafe_allow_html=True)
+
+            st.markdown('---')
+
+
+
 
 
