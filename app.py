@@ -2,7 +2,7 @@
 #app.py
 import streamlit as st
 from multiapp import MultiApp
-from apps import home, stock_summary, sentiment     # import your app modules here
+from apps import home, stock_summary, market, watchlist     # import your app modules here
 
 st.set_page_config(
     page_title="hvFinance",
@@ -22,7 +22,8 @@ app = MultiApp()
 # Add all your application here
 app.add_app("Home", home.app)
 app.add_app("Stock Analysis", stock_summary.app)
-app.add_app("Market", sentiment.app)
+app.add_app("Market", market.app)
+app.add_app("Watchlist", watchlist.app)
 
 
 # The main app

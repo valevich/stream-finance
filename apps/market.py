@@ -12,30 +12,131 @@ import plotly.graph_objects as go
 import numpy as np
 import yahoo_fin.stock_info as ya
 from apps.stock_scrape1 import getData_Reddit
+import matplotlib.pyplot as plt
+from alpha_vantage.sectorperformance import SectorPerformances
+from apps.stock_scrape1 import getData_MarketWatch
 
 
 def app():
 
     st.sidebar.markdown('---')
 
-    # # -------------  Progress Bar and Refresh  ---------------------------------
-    # progress_bar = st.sidebar.progress(0)
-    # status_text = st.sidebar.empty()
-    # for i in range(1, 101):
-    #     status_text.text("%i%% Complete" % i)
-    #     progress_bar.progress(i)
-    #     time.sleep(0.05)
-    # progress_bar.empty()
-    # # Streamlit widgets automatically run the script from top to bottom. Since
-    # # this button is not connected to any other logic, it just causes a plain
-    # # rerun.
-    # st.sidebar.button("Refresh")
+    with st.spinner('Loading Data...Please Wait...'):
+
+        #---------------  Header Market Data  -------------------
+        symbol = 'AAPL'
+        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        if len(df_mw1.index) > 0:
+            # new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com Markets</p>'
+            # st.markdown(new_title, unsafe_allow_html=True)
+            # st.table(df_mw1.assign(hack='').set_index('hack'))
+
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+            #---------------  Dow  -------------------
+            with col1:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[0]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[0]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  S&P 500  -------------------
+            with col2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>S&P 500</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[1]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[1]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[1]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+
+            #---------------  Nasdaq  -------------------
+            with col3:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Nasdaq</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[2]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[2]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[2]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  Gold  -------------------
+            with col4:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gold</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[0]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[0]['Change'] + " (" + df_mw2.iloc[0]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw2.iloc[0]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  Oil  -------------------
+            with col5:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Oil</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[1]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[1]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+
+        st.write ('\n\n\n\n')
+
+        # Main Page Header 
+        # st.markdown("""<div style='text-align: center;'><h3><b>THE STOCK ANALYSIS</b></h1></div>""", unsafe_allow_html=True)
+        st.markdown("---")
+        # st.markdown("")
+
+
+
+    #---------------  Performance by Sector  -------------------
+    sp = SectorPerformances(key='0E66O7ZP6W7A1LC9', output_format='pandas')
+    plt.figure(figsize=(8,8))
+    data, meta_data = sp.get_sector()
+    # print(meta_data)
+    data['Rank D: Month Performance'].plot(kind='bar')
+    plt.title('30 Days Stock Market Performance (%) per Sector')
+    plt.tight_layout()
+    plt.grid()
+    st.pyplot(plt)
+
+
+
 
 
     # ----------------------------------------------
     #           Market Movers Stocks   
     # ----------------------------------------------
-    if st.sidebar.checkbox("Market Movers", value = True):
+    if st.sidebar.checkbox("Market Movers"):
         with st.spinner('Loading Data...Please Wait...'):
 
             # ------------- Most Active Stocks ----------------------
@@ -45,6 +146,19 @@ def app():
             df1.fillna("",inplace=True)                                 # remove Null values from column
             df1['Change_Perc'] = df1['Change_Perc'].astype(str) + '%'   # add % to column value
 
+            for i in df1.index:                                     
+                num = human_format(df1.at[i, "Volume"])             # Reformat 'Value' Column
+                df1['Volume'] = df1['Volume'].astype(str)           # Convert 'Value' Column to String
+                df1.at[i, "Volume"] = num
+
+                num = human_format(df1.at[i, "Avg_Vol_3M"])         # Reformat 'Avg Vol' Column
+                df1['Avg_Vol_3M'] = df1['Avg_Vol_3M'].astype(str)   # Convert 'Avg Vol' Column to String
+                df1.at[i, "Avg_Vol_3M"] = num
+
+                if type(df1.at[i, "Market_Cap"]) != str:
+                    num = human_format(df1.at[i, "Market_Cap"])     # Reformat 'Market Cap' Column
+                    df1.at[i, "Market_Cap"] = num
+
             fig =  ff.create_table(df1)
         
             # color_schema = ['black', 'black', 'black', 'green', 'red', 'grey', 'blue']
@@ -53,7 +167,7 @@ def app():
                 ['red' if  boolv else 'green' for boolv in df1['Change_Perc'].str.contains('-')],
                 ['black']]
             fig = go.Figure(data=go.Table(
-                columnwidth=[0.8,3,1,1,1,1.2,1.2,1.5,1],
+                columnwidth=[0.8,3,1,1,1,1.3,1.3,1.3,1],
                 header=dict(values=list(['Symbol', 'Name', 'Price', 'Change', 'Change %', 'Volume', 'Avg Vol (3M)', 'Market Cap', 'PE Ratio']),
                     fill_color='#FD8E72',
                     align='center'), 
@@ -75,6 +189,21 @@ def app():
             df1.fillna("",inplace=True)                                 # remove Null values from column
             df1['Change_Perc'] = df1['Change_Perc'].astype(str) + '%'   # add % to column value
 
+
+            for i in df1.index:                                     
+                num = human_format(df1.at[i, "Volume"])             # Reformat 'Value' Column
+                df1['Volume'] = df1['Volume'].astype(str)           # Convert 'Value' Column to String
+                df1.at[i, "Volume"] = num
+
+                num = human_format(df1.at[i, "Avg_Vol_3M"])         # Reformat 'Avg Vol' Column
+                df1['Avg_Vol_3M'] = df1['Avg_Vol_3M'].astype(str)   # Convert 'Avg Vol' Column to String
+                df1.at[i, "Avg_Vol_3M"] = num
+
+                if type(df1.at[i, "Market_Cap"]) != str:
+                    num = human_format(df1.at[i, "Market_Cap"])     # Reformat 'Market Cap' Column
+                    df1.at[i, "Market_Cap"] = num
+
+
             fig =  ff.create_table(df1)
         
             # color_schema = ['black', 'black', 'black', 'green', 'red', 'grey', 'blue']
@@ -83,7 +212,7 @@ def app():
                 ['red' if  boolv else 'green' for boolv in df1['Change_Perc'].str.contains('-')],
                 ['black']]
             fig = go.Figure(data=go.Table(
-                columnwidth=[0.8,3,1,1,1,1.2,1.2,1.5,1],
+                columnwidth=[0.8,3,1,1,1,1.3,1.3,1.3,1],
                 header=dict(values=list(['Symbol', 'Name', 'Price', 'Change', 'Change %', 'Volume', 'Avg Vol (3M)', 'Market Cap', 'PE Ratio']),
                     fill_color='#FD8E72',
                     align='center'), 
@@ -105,6 +234,20 @@ def app():
             df1.fillna("",inplace=True)                                 # remove Null values from column
             df1['Change_Perc'] = df1['Change_Perc'].astype(str) + '%'   # add % to column value
 
+            for i in df1.index:                                     
+                num = human_format(df1.at[i, "Volume"])             # Reformat 'Value' Column
+                df1['Volume'] = df1['Volume'].astype(str)           # Convert 'Value' Column to String
+                df1.at[i, "Volume"] = num
+
+                num = human_format(df1.at[i, "Avg_Vol_3M"])         # Reformat 'Avg Vol' Column
+                df1['Avg_Vol_3M'] = df1['Avg_Vol_3M'].astype(str)   # Convert 'Avg Vol' Column to String
+                df1.at[i, "Avg_Vol_3M"] = num
+
+                num = human_format(df1.at[i, "Market_Cap"])         # Reformat 'Avg Vol' Column
+                df1['Market_Cap'] = df1['Market_Cap'].astype(str)   # Convert 'Avg Vol' Column to String
+                df1.at[i, "Market_Cap"] = num
+ 
+ 
             fig =  ff.create_table(df1)
         
             # color_schema = ['black', 'black', 'black', 'green', 'red', 'grey', 'blue']
@@ -113,7 +256,7 @@ def app():
                 ['red' if  boolv else 'green' for boolv in df1['Change_Perc'].str.contains('-')],
                 ['black']]
             fig = go.Figure(data=go.Table(
-                columnwidth=[0.8,3,1,1,1,1.2,1.2,1.5,1],
+                columnwidth=[0.8,3,1,1,1,1.3,1.3,1.3,1],
                 header=dict(values=list(['Symbol', 'Name', 'Price', 'Change', 'Change %', 'Volume', 'Avg Vol (3M)', 'Market Cap', 'PE Ratio']),
                     fill_color='#FD8E72',
                     align='center'), 
@@ -364,5 +507,16 @@ def app():
             fig.update_layout(margin=dict(l=0,r=0,b=10,t=10), width=900,height=800)
 
             st.write(fig)
+
+
+def human_format(num):
+    num = float(num)
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    # add more suffixes if you need them
+    return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])
+
 
 
