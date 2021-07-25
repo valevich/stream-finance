@@ -162,7 +162,7 @@ pygsheets==2.0.5
 pylev==1.4.0
 PyMeeus==0.5.11
 pyobjc==7.3
-pyobjc-core==7.3
+# pyobjc-core==7.3
 pyobjc-framework-Accessibility==7.3
 pyobjc-framework-Accounts==7.3
 pyobjc-framework-AddressBook==7.3
