@@ -139,46 +139,38 @@ def app():
 
 
 
+    if st.sidebar.checkbox("Save Ticker"):
+        
+        with st.spinner('Loading Data...Please Wait...'):
 
-        if st.sidebar.button('Save Ticker'):
+            xPortfolio = st.sidebar.selectbox("Watchlist",
+                                ['Watchlist', 'Dividends', 'Buys', 'ETFs'])
 
-            # client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
-            # spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
-            # sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-            # sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-            # wks = sheet.worksheet_by_title('Watchlist')
+            if st.sidebar.button('Save'):
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+                sheet = gc.open('Research')
+                # wks = sheet.worksheet_by_title('Watchlist')
+                wks = sheet.worksheet_by_title(xPortfolio)
 
-            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            sheet = gc.open('Research')
-            wks = sheet.worksheet_by_title('Watchlist')
+                price = ticker.info['currentPrice']
 
-            price = ticker.info['currentPrice']
+                if ticker.info['dividendRate']:
+                    xDividendRate = ticker.info['dividendRate']
+                    xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                    xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                else:
+                    xDividend = '-'
 
-            # info = get_info(symbol)
-            # dividends = info[3]
-            # if 'N/A' in dividends:
-            #     dividends = '-'
+                # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
+                # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
+                values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend]]
+                wks.append_table(values, start='A3', end=None, dimension='ROWS', overwrite=True)  # Added
 
-            if ticker.info['dividendRate']:
-                xDividendRate = ticker.info['dividendRate']
-                xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
-                xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
-            else:
-                xDividend = '-'
-
-
-
-            # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
-            # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
-            values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend]]
-            wks.append_table(values, start='A3', end=None, dimension='ROWS', overwrite=True)  # Added
-
-            st.sidebar.text('Saved')
-
-    
+                # st.sidebar.text('Saved')
+                st.sidebar.write("Saved to: ", xPortfolio)
 
 
-        st.sidebar.markdown('---')
+    st.sidebar.markdown('---')
 
 
 
