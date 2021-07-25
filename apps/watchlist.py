@@ -9,12 +9,77 @@ def app():
 
     st.sidebar.markdown('---')
 
-    with st.spinner('Authorizing Google Sheets...Please Wait...'):
-        client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
+    if st.sidebar.checkbox("Test"):
+
+        # client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
+        client = pygsheets.authorize(service_file='gsheets1-keys.json')
         spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
         sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
         sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
         wks = sheet.worksheet_by_title('Watchlist')
+
+        df1 = wks.get_as_df()
+        st.table (df1)
+
+
+
+
+
+
+    if st.sidebar.checkbox("My Watchlist"):
+
+        with st.spinner('Authorizing Google Sheets...Please Wait...'):
+            client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
+            spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
+            sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+            sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+            wks = sheet.worksheet_by_title('Watchlist')
+
+        with st.spinner('Loading Data...Please Wait...'):
+            df1 = wks.get_as_df()
+            # st.table (df1)
+
+            df1.drop(
+                columns=["7_day_Change", "30_day_Change", "90_day_Change"]
+            )
+
+            font_color = ['black'] * 6 + \
+                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+                ['black']]
+
+            fig = go.Figure(data=[go.Table(
+                columnwidth=[1.2,5,1.7,0.7,1.3,1.3,1.3,1.3,2,1.3,1.3,1.3,1.3,1.3,1.3,1.3],
+                header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shrs', 'Cost', 
+                                        'Today', 'Today %', 'Gain/Loss', 'Dividend (Yield)',
+                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
+                                        'Mkt Cap', 'Out Shares', 'Volume']),
+                            fill_color='paleturquoise',
+                            align='center'),
+                cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
+                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+                                df1.Dividend_Yield, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+                                df1.PE, df1.Mkt_Cap, df1.Out_Shares, df1.Volume, ],
+                        fill_color='lavender',
+                        font_color=font_color,
+                        height=25,
+                        align = ['left', 'left', 'center', 'center', 'right']
+                    )
+                )
+            ])
+
+            # fig.show()
+            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1300,height=800)
+            st.write(fig)
+
+
+
+
+
+
+
+
+
 
     #---------- Append
     # wks.clear()
@@ -58,44 +123,6 @@ def app():
     # st.write (wks.get_as_df().to_json())
 
     #---------- Export A Google Sheet To Dataframe
-    with st.spinner('Loading Data...Please Wait...'):
-        df1 = wks.get_as_df()
-        # st.table (df1)
-
-        df1.drop(
-            columns=["7_day_Change", "30_day_Change", "90_day_Change"]
-        )
-
-        font_color = ['black'] * 6 + \
-            [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
-            ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
-            ['black']]
-
-        fig = go.Figure(data=[go.Table(
-            columnwidth=[1.2,5,1.7,0.7,1.3,1.3,1.3,1.3,2,1.3,1.3,1.3,1.3,1.3,1.3,1.3],
-            header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shrs', 'Cost', 
-                                     'Today', 'Today %', 'Gain/Loss', 'Dividend (Yield)',
-                                     '52-Week Low', '52-Week High', 'EPS', 'PE',
-                                     'Mkt Cap', 'Out Shares', 'Volume']),
-                        fill_color='paleturquoise',
-                        align='center'),
-            cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
-                               df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
-                               df1.Dividend_Yield, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
-                               df1.PE, df1.Mkt_Cap, df1.Out_Shares, df1.Volume, ],
-                    fill_color='lavender',
-                    font_color=font_color,
-                    height=25,
-                    align = ['left', 'left', 'center', 'center', 'right']
-                )
-            )
-        ])
-
-        # fig.show()
-        fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1300,height=800)
-        st.write(fig)
-
-
 
 
 
