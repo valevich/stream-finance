@@ -142,11 +142,14 @@ def app():
 
         if st.sidebar.button('Save Ticker'):
 
-            # save_watchlist(symbol)
-            client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
-            spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
-            sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-            sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+            # client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
+            # spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
+            # sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+            # sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+            # wks = sheet.worksheet_by_title('Watchlist')
+
+            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            sheet = gc.open('Research')
             wks = sheet.worksheet_by_title('Watchlist')
 
             price = ticker.info['currentPrice']

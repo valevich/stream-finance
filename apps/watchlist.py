@@ -9,44 +9,28 @@ def app():
 
     st.sidebar.markdown('---')
 
-    if st.sidebar.checkbox("Test"):
-
-        # # client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
-        # client = pygsheets.authorize(service_file='client_secret.json')
-        # spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
-        # sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-        # sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-        # wks = sheet.worksheet_by_title('Watchlist')
-
-        # gc = pygsheets.authorize()
-        gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-
-
-        # Open spreadsheet and then worksheet
-        sheet = gc.open('Research')
-        wks = sheet.worksheet_by_title('Watchlist')
-
-        df1 = wks.get_as_df()
-        st.table (df1)
+    # if st.sidebar.checkbox("Test"):
+    #     gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+    #     sheet = gc.open('Research')
+    #     wks = sheet.worksheet_by_title('Watchlist')
+    #     df1 = wks.get_as_df()
+    #     st.table (df1)
 
         # wks.update_value('A40', "Testing")
 
 
 
-
-
     if st.sidebar.checkbox("My Watchlist"):
 
-        with st.spinner('Authorizing Google Sheets...Please Wait...'):
-            client = pygsheets.authorize(service_account_file='gsheets1-keys.json')
-            spreadsheet_url = "gheets1@python-gsheets1.iam.gserviceaccount.com"
-            sheet_data = client.sheet.get('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
-            sheet = client.open_by_key('1_fYueNRVBmv4lL-H5JdkwNRBRWEgCS0hB_icrRSTMoE')
+        with st.spinner('Loading Data...Please Wait...'):
+
+            st.title('My Watchlist')
+
+            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            sheet = gc.open('Research')
             wks = sheet.worksheet_by_title('Watchlist')
 
-        with st.spinner('Loading Data...Please Wait...'):
             df1 = wks.get_as_df()
-            # st.table (df1)
 
             df1.drop(
                 columns=["7_day_Change", "30_day_Change", "90_day_Change"]
