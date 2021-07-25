@@ -75,7 +75,7 @@ hpack==3.0.0
 # html==1.13
 html5lib==1.1
 httplib2==0.19.0
-httpstan==4.5.0
+# httpstan==4.5.0
 hyperframe==5.2.0
 hyperlink==21.0.0
 idna==2.10
