@@ -487,9 +487,6 @@ def getData_MarketWatch(ticker):
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
 
-        # res = requests.get(url.format(ticker))
-        # soup = bs(res.content, 'lxml')
-
         #--------------------------  MARKETWATCH MARKET DATA  -----------------------------
         xMarket = soup.find('tbody', class_='markets__group')
         xMarket = xMarket.get_text()
@@ -543,7 +540,13 @@ def getData_MarketWatch(ticker):
         df2.columns =['Market', 'Value', 'Change', 'Change %']
         print (tabulate(df2, headers='keys', tablefmt='psql', showindex=False))
 
+    except:
+        df1 = pd.DataFrame([])
+        df2 = pd.DataFrame([])
+        print ("Not Found Exception! - MarketWatch DF1, DF2")
+        pass
 
+    try:
         #--------------------------  MARKETWATCH ANALYST RATINGS  -----------------------------
         xRatings = soup.find('table', class_='table table-primary align--left border--dotted')
         xRatings = xRatings.get_text()
@@ -627,11 +630,9 @@ def getData_MarketWatch(ticker):
 
 
     except:
-        df1 = pd.DataFrame([])
-        df2 = pd.DataFrame([])
         df3 = pd.DataFrame([])
         df4 = pd.DataFrame([])
-        print ("Not Found Exception! - MarketWatch")
+        print ("Not Found Exception! - MarketWatch DF3, DF4")
         pass
 
 
@@ -777,7 +778,7 @@ def getData_Reddit():
 
 
 #================================================================================
-#                         MARKETWATCH                                           #
+#                         MARKETWATCH ETFs                                          #
 #================================================================================
 def getData_MarketWatchETFs(ticker):
 
@@ -797,8 +798,6 @@ def getData_MarketWatchETFs(ticker):
 
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
-        # res = requests.get(url.format(ticker))
-        # soup = bs(res.content, 'lxml')
 
         xDividendDate = ''
         xExpenseRatio = ''

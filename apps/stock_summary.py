@@ -252,8 +252,7 @@ def app():
 
     #---------------  Header Market Data  -------------------
     with st.spinner('Loading Data...Please Wait...'):
-        # df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
-        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch('AAPL')
+        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
         if len(df_mw1.index) > 0:
             buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
             #---------------  Dow  -------------------
@@ -848,7 +847,6 @@ def app():
                     new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com</p>'
                     st.markdown(new_title, unsafe_allow_html=True)
                     st.table(df_mw3.assign(hack='').set_index('hack'))
-                    # st.write(df_mw3)
 
                     # fig = go.Figure(data=go.Table(
                     #     columnwidth=[3,2,2,2],
