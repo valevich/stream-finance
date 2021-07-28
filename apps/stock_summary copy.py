@@ -10,12 +10,18 @@ import plotly.graph_objects as go
 import plotly.express as px 
 from plotly.subplots import make_subplots
 import pandas as pd
+from pandas import DataFrame
 from datetime import datetime
 from bs4 import BeautifulSoup
 import datetime
 import cufflinks as cf
 from datetime import date
 import markdown
+import pygsheets
+from google.oauth2 import service_account
+from gspread_pandas import Spread, Client
+from gsheetsdb import connect
+
 
 
 from apps.stock_scrape1 import getData_Zacks
@@ -23,88 +29,86 @@ from apps.stock_scrape1 import getData_Dividata
 from apps.stock_scrape1 import getData_Tipranks
 from apps.stock_scrape1 import getData_StockInvest
 from apps.stock_scrape1 import getData_MarketWatch
+from apps.stock_scrape1 import getData_MarketWatchETFs
+
 
 
 def app():
-    # st.title('Stock Summary')
-
-    # st.set_page_config(layout="wide") #wide width of page 
 
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)    
 
-    #################### SIDEBAR FUNCTIONS ####################
 
-    #------ Function to SCRAPE INFO ON TICKER
-    @st.cache
-    def get_info(symbol):
-        url = f"https://finance.yahoo.com/quote/{symbol}?p={symbol}"
-        r = requests.get(url)
-        soup = BeautifulSoup(r.text, 'lxml')
-        # locations of values, all have same class
-        indices = [0, 1, 5, 13, 8, 10, 11]
-        try:
-            info = [soup.find_all('td', {'class': "Ta(end) Fw(600) Lh(14px)"})[i].text for i in indices]
-            # company = soup.find_all('h1', {'class': "D(ib) Fz(18px)"})[0].text
-            # name_len = len(company) - (len(symbol) + 2) #remove ticker at end
-            # info.insert(0, company[:name_len]) #add company name at front
-        except:
-            info = ['N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A']
-        return info
-
-
-    #------ Function to SCRAPE CURRENT PRICE AND CHANGE
-    @st.cache
-    def get_price(symbol):
-        url = f"https://finance.yahoo.com/quote/{symbol}/"
-        r = requests.get(url)
-        soup = BeautifulSoup(r.text, 'lxml')
+    #------ Function to DISPLAY SUMMARY (STOCKS) ----------
+    def display_summary_equity(symbol):
 
         try:
-            for stock in soup.find_all('span', class_='Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)'):
-                currentPrice = stock.get_text()
-            changePrice = soup.find('span', {'class': ['Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($positiveColor)',
-                                                    'Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($negativeColor)']}).text
-            # print(currentPrice)
-            # print(changePrice)
+            xPrice = "%0.2f" % (ticker.info['currentPrice'])                    # force display two decimals
+            xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
+            xOpen = "%0.2f" % (ticker.info['open'])                             # force display two decimals
+            xChange = "%0.2f" % (float(xPrice) - float(xPrevClose))
+            xChangePerc = "%0.2f" % ((float(xPrice) - float(xPrevClose)) / float(xPrevClose) * 100)
+            xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
+            xMarketCap = human_format(ticker.info['marketCap'])
+            if ticker.info['dividendRate']:
+                xDividendRate = ticker.info['dividendRate']
+                xDividendYield = str("%0.2f" % (float(xDividendRate) / float(xPrice) * 100))
+                xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+            else:
+                xDividend = '-'
+            if 'trailingPE' in ticker.info:
+                xTrailingPE = "%0.2f" % ticker.info['trailingPE']
+            else:
+                xTrailingPE = '-'
+            if 'trailingEps' in ticker.info:
+                if ticker.info['trailingEps']:
+                    xTrailingEps = "%0.2f" % ticker.info['trailingEps']
+                else:
+                    xTrailingEps = '-'
+            else:
+                xTrailingEps = '-'
+
         except:
-            currentPrice = ['N/A']
-            changePrice = ['N/A']
-        return currentPrice, changePrice
+            xPrice = 0
+            xPrevClose = 0
+            xOpen = 0
+            xChange = 0
+            xChangePerc = 0
+            xFiftyTwoWeekRange = 0
+            xDividend = '-'
+            xTrailingPE = 0
+            xTrailingEps = 0
+            xMarketCap = 0
 
 
-
-    #------ Function to DISPLAY TICKER VALUES
-    def display_summary(symbol):
-        info = get_info(symbol)
-        price = get_price(symbol)
+        if float(xPrice) > float(xPrevClose):
+            xColor = 'green'
+        else : 
+            xColor = 'red'
 
         row = \
         f"""<div> 
                 <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Today's Price: "}</b></span>
-                <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{price[0]}</b></span>
+                <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
             </div>
         """
         st.markdown(row, unsafe_allow_html=True)
-        
-        if price[1][0:1] == '+':
-            row = \
+                
+        row = \
             f"""<div> 
-                    <span style='float: right; color: green; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{price[1]}</b></span>
-                </div>
-            """
-        else:
-            row = \
-            f"""<div> 
-                    <span style='float: right; color: red; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{price[1]}</b></span>
+                    <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
                 </div>
             """
         st.markdown(row, unsafe_allow_html=True)
         
         st.markdown('\n')
 
-        info_names = ["Close Price: ", "Open Price: ", "52-Week Range: ", "Dividend Rate & Yield: ", \
-            "Market Cap: ", "PE Ratio: ", "EPS: "]
-        for name,infoValue in zip(info_names, info):
+        # num = human_format(ticker.info['marketCap'])
+
+        info_names = ["Previous Close: ", "Open: ", "52-Week Range: ", "Dividend Rate & Yield: ", \
+            "Market Cap: ", "PE Ratio (TTM): ", "EPS (TTM): "]
+        info_list = [xPrevClose, xOpen, xFiftyTwoWeekRange, xDividend, \
+                    xMarketCap, xTrailingPE, xTrailingEps]
+        for name,infoValue in zip(info_names, info_list):
             row = \
             f"""<div> 
                     <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
@@ -112,19 +116,91 @@ def app():
                 </div>
             """
             st.markdown(row, unsafe_allow_html=True)
-        # st.markdown("---")
+
+
+
+    #------ Function to DISPLAY SUMMARY (ETF) ----------
+    def display_summary_etf(xExpenseRatio):
+
+        # st.write ('+volume: ' + str(ticker.info['volume']))
+        # st.write ('averageVolume: ' + str(ticker.info['averageVolume']))
+        # st.write ('threeYearAverageReturn: ' + str(ticker.info['threeYearAverageReturn']))
+        # st.write ('fiveYearAverageReturn: ' + str(ticker.info['fiveYearAverageReturn']))
+        # st.write ('twoHundredDayAverage: ' + str(ticker.info['twoHundredDayAverage']))
+        # st.write ('trailingAnnualDividendYield: ' + str(ticker.info['trailingAnnualDividendYield']))
+        # st.write ('trailingAnnualDividendRate: ' + str(ticker.info['trailingAnnualDividendRate']))
+
+        try:
+
+            # xDividendDate, xExpenseRatio, xTurnover, xBeta = getData_MarketWatchETFs(symbol)
+
+            xPrice = "%0.2f" % (ticker.info['regularMarketPrice'])              # force display two decimals
+            xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
+            xOpen = "%0.2f" % (ticker.info['open'])                             # force display two decimals
+            xChange = "%0.2f" % (float(xPrice) - float(xPrevClose))
+            xChangePerc = "%0.2f" % ((float(xPrice) - float(xPrevClose)) / float(xPrevClose) * 100)
+            xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
+            xDayLowHigh = str("%0.2f" % ticker.info['dayLow']) + ' - ' + str("%0.2f" % ticker.info['dayHigh'])
+            xTotalAssets = human_format(ticker.info['totalAssets'])
+            xYield = str(ticker.info['yield'] * 100) + '%'
+            if 'trailingPE' in ticker.info:
+                xTrailingPE = "%0.2f" % ticker.info['trailingPE']
+            else:
+                xTrailingPE = '-'
+
+        except:
+            xPrice = 0
+            xPrevClose = 0
+            xOpen = 0
+            xChange = 0
+            xChangePerc = 0
+            xFiftyTwoWeekRange = 0
+            xYield = ''
+            xTrailingPE = 0
+            # xExpenseRatio = ''
+            xTotalAssets = 0
+            xDayLowHigh = ''
+
+        if float(xPrice) > float(xPrevClose):
+            xColor = 'green'
+        else : 
+            xColor = 'red'
+
+        row = \
+        f"""<div> 
+                <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Today's Price: "}</b></span>
+                <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
+            </div>
+        """
+        st.markdown(row, unsafe_allow_html=True)
+                
+        row = \
+            f"""<div> 
+                    <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
+                </div>
+            """
+        st.markdown(row, unsafe_allow_html=True)
+        
+        st.markdown('\n')
+
+        info_names = ["Previous Close: ", "Open: ", "Day Low-High", "52-Week Range: ",  \
+                      "Yield: ", "ExpenseRatio: ", "Total Assets: ", "PE Ratio (TTM): "]
+        info_list = [xPrevClose, xOpen, xDayLowHigh, xFiftyTwoWeekRange,  \
+                    xYield, xExpenseRatio, xTotalAssets, xTrailingPE]
+        for name,infoValue in zip(info_names, info_list):
+            row = \
+            f"""<div> 
+                    <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
+                    <span style='float: right;line-height: 10px; font-size:12px'> {infoValue}</span>
+                </div>
+            """
+            st.markdown(row, unsafe_allow_html=True)
+
 
 
 
     #------------------------ SETUP SIDEBAR TICKER INPUT -----------------------#
-    # symbol = st.text_input('Enter Ticker: ', value = 'AAPL')
-    # ticker = yf.Ticker(symbol)
 
-    # # Load ticker symbols
-    # alltickers_df = pd.read_csv("tickers.csv")
-    # tickers = list(alltickers_df['Symbol'])
-
-    # st.sidebar.markdown("""<h2 style='text-align: center;'>SEARCH 🔎</h2>""", unsafe_allow_html=True)
     with st.spinner('Loading Data...Please Wait...'):
         symbol = st.sidebar.text_input('Stock Symbol', value = 'AAPL') #search box
 
@@ -137,10 +213,46 @@ def app():
         if not symbol: 
             st.sidebar.markdown('')
             st.sidebar.markdown("""<div style='text-align: center;'>Please search a ticker to see results.</div>""", unsafe_allow_html=True)
-        else: 
-            # Sidebar
-            st.sidebar.markdown('---')
-            # display_summary(symbol)
+        # else: 
+        #     st.sidebar.markdown('---')
+
+
+
+    if st.sidebar.checkbox("Save Ticker"):
+
+        with st.spinner('Loading Data...Please Wait...'):
+
+            xPortfolio = st.sidebar.selectbox("Watchlist",
+                                ['Watchlist', 'Dividends', 'Buys', 'ETFs'])
+
+            if st.sidebar.button('Save'):
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+                sheet = gc.open('Research')
+                # wks = sheet.worksheet_by_title('Watchlist')
+                wks = sheet.worksheet_by_title(xPortfolio)
+
+                price = ticker.info['currentPrice']
+
+                if ticker.info['dividendRate']:
+                    xDividendRate = ticker.info['dividendRate']
+                    xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                    xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                else:
+                    xDividend = '-'
+
+                # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
+                # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
+                values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend]]
+                wks.append_table(values, start='A3', end=None, dimension='ROWS', overwrite=True)  # Added
+
+                # st.sidebar.text('Saved')
+                st.sidebar.write("Saved to: ", xPortfolio)
+
+
+    st.sidebar.markdown('---')
+
+
+
 
 
     #---------------------------------------------------------------------
@@ -149,7 +261,8 @@ def app():
 
     #---------------  Header Market Data  -------------------
     with st.spinner('Loading Data...Please Wait...'):
-        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        # df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch('AAPL')
         if len(df_mw1.index) > 0:
             # new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com Markets</p>'
             # st.markdown(new_title, unsafe_allow_html=True)
@@ -241,29 +354,75 @@ def app():
     # st.markdown("")
 
 
-    #---------------  2 Header Column Section  -------------------
+    #---------------  Header (Equity) or (ETFs) Multi-Column Section  -------------------
     with st.spinner('Loading Data...Please Wait...'):
-        if symbol: 
-            hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
-            with hdr1:
-                if ticker.info['logo_url']:
-                    st.image(ticker.info['logo_url'])
-            with hdr2: 
-                try:
-                    st.subheader(ticker.info['longName'])
-                    xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
-                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
-                    st.markdown(row, unsafe_allow_html=True)
-                except:
-                    pass
-            with hdr3:
-                display_summary(symbol)
+        if symbol and 'symbol' in ticker.info:
 
-            summ = ticker.info['longBusinessSummary']
-            with st.beta_expander(f'Description: {summ[0:250]} ... Read more'):
-                st.markdown(f'<p class="small-font"> {summ} !!</p>', unsafe_allow_html=True)
+            #---------------  Header (Equity) 3 Columns  -------------------
+            if ticker.info['quoteType'] == 'EQUITY':
+                hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
+                with hdr1:
+                    if ticker.info['logo_url']:
+                        st.image(ticker.info['logo_url'])
+                with hdr2: 
+                    try:
+                        st.subheader(ticker.info['longName'])
+                        xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                    except:
+                        pass
+                with hdr3:
+                    display_summary_equity(symbol)            
+            else:
+                #---------------  Header (ETFs) 2 Columns  -------------------
+                xExpenseRatio = ''
+                xList2 = []
+                xDividendDate, xExpenseRatio, xTurnover, xBeta, xList2 = getData_MarketWatchETFs(symbol)
+                hdr1,hdr2, hdr3, hdr4 = st.beta_columns([4,2,1,2])
+                with hdr1: 
+                    try:
+                        st.subheader(ticker.info['longName'])
+                        xText = ticker.info['category']
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 16px;">Category: {xText}</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                    except:
+                        pass
+
+                with hdr2: 
+                        st.text ('\n')
+                        st.text ('\n')
+                        st.text ('\n')
+                        st.text ('\n')
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 12px; font-size: 14px;">YTD LIPPER RANKING</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                        info_names = ["Total Returns: ", "Consistent Return: ", "Preservation: ", \
+                                      "Tax Efficiency: ", "Expense: "]
+                        info_list = [xList2[0], xList2[1], xList2[2], xList2[3], xList2[4]]
+                        for name, infoValue in zip(info_names, info_list):
+                            row = \
+                            f"""<div> 
+                                    <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
+                                    <span style='float: right;line-height: 10px; font-size:12px'>{infoValue}</span>
+                                </div>
+                            """
+                            st.markdown(row, unsafe_allow_html=True)
+
+                with hdr4:
+                    display_summary_etf(xExpenseRatio)
+
+            if 'longBusinessSummary' in ticker.info:
+                if ticker.info['longBusinessSummary']:
+                    summ = ticker.info['longBusinessSummary']
+                    with st.beta_expander(f'Description: {summ[0:250]} ... Read more'):
+                        st.markdown(f'<p class="small-font"> {summ} !!</p>', unsafe_allow_html=True)
+
+        else:
+            st.write ('Invalid Ticker!')
+
 
     st.write ('\n\n')
+
 
 
     #---------------  LOAD YFINANCE DATA FOR 'SPY'  -------------------
@@ -298,103 +457,106 @@ def app():
 
     #---------------  Overview Selection  -------------------
     if st.sidebar.checkbox("Overview", value = True):
-        if symbol: 
+        if symbol and 'symbol' in ticker.info:
 
-            #--------  Display Stock Price Graph ----------------- 
-            start = "2021-01-01" # start of graphics                   #
-            today = date.today()+ datetime.timedelta(days=1)
-            d1 = today.strftime("%Y-%m-%d")
-            current_year, current_month, current_day = today.strftime("%Y"), today.strftime("%m"), today.strftime("%d")
-            tickerData = yf.download(symbol, start=start, end="{}".format(d1))
-            tickerData['Date']=tickerData.index
-            df1 = tickerData
+            try:
+                #--------  Display Stock Price Graph ----------------- 
+                start = "2021-01-01" # start of graphics                   #
+                today = date.today()+ datetime.timedelta(days=1)
+                d1 = today.strftime("%Y-%m-%d")
+                current_year, current_month, current_day = today.strftime("%Y"), today.strftime("%m"), today.strftime("%d")
+                tickerData = yf.download(symbol, start=start, end="{}".format(d1))
+                tickerData['Date']=tickerData.index
+                df1 = tickerData
 
-            # window choice
-            xRange = st.sidebar.slider('Select Range (days)', min_value=2,max_value=126, value=30)
-            # st.title('Share price of last '+str(xRange)+' days\n')
-            st.subheader('Share price of last '+str(xRange)+' days\n')
-        
-            vert = '#599673'
-            rouge = '#e95142'
+                # window choice
+                xRange = st.sidebar.slider('Select Range (days)', min_value=2,max_value=126, value=30)
+                # st.title('Share price of last '+str(xRange)+' days\n')
+            
+                vert = '#599673'
+                rouge = '#e95142'
 
-            fig = make_subplots(rows=1, cols=2,
-                                specs=[[{'type': 'xy'},{'type':'indicator'}] for i in range (1)],
-                                column_widths=[0.85, 0.15],
-                                shared_xaxes=True,
-                                subplot_titles=[symbol, ''])
+                fig = make_subplots(rows=1, cols=2,
+                                    specs=[[{'type': 'xy'},{'type':'indicator'}] for i in range (1)],
+                                    column_widths=[0.85, 0.15],
+                                    shared_xaxes=True,
+                                    subplot_titles=[symbol, ''])
 
-            def xColor(df):
-                if df['Close'].iloc[-1*xRange]-df['Close'].iloc[-1] < 0 :
-                    return vert
-                else : return rouge
+                def xColor(df):
+                    if df1['Close'].iloc[-1*xRange]-df1['Close'].iloc[-1] < 0 :
+                        return vert
+                    else : return rouge
 
-            fig.add_trace(go.Scatter(
-                y = df1['Close'],
-                x = df1['Date'],
-                line=dict(color=xColor(df1), width=1),
-                name="",
-                hovertemplate=
-                "Date: %{x}<br>" +
-                "Close: %{y}<br>"+
-                "Volume: %{text}<br>",
-                text = df1.Volume,
-            ), row=1, col=1)
+                fig.add_trace(go.Scatter(
+                    y = df1['Close'],
+                    x = df1['Date'],
+                    line=dict(color=xColor(df1), width=1),
+                    name="",
+                    hovertemplate=
+                    "Date: %{x}<br>" +
+                    "Close: %{y}<br>"+
+                    "Volume: %{text}<br>",
+                    text = df1.Volume,
+                ), row=1, col=1)
 
-            fig.add_hline(y=df1['Close'].iloc[0],
-                        line_dash="dot",
-                        annotation_text="{}".format(df1['Date'][0].date()),
-                        annotation_position="bottom left",
-                        line_width=2, line=dict(color='black'),
-                        annotation=dict(font_size=10),
-                        row=1, col=1)
+                fig.add_hline(y=df1['Close'].iloc[0],
+                            line_dash="dot",
+                            annotation_text="{}".format(df1['Date'][0].date()),
+                            annotation_position="bottom left",
+                            line_width=2, line=dict(color='black'),
+                            annotation=dict(font_size=10),
+                            row=1, col=1)
 
-            fig.add_trace(go.Indicator(
-                mode = "number+delta",
-                value = round(df1['Close'].iloc[-1],4),
-                number={'prefix': "$", 'font_size' : 40},
-                delta = {"reference": df1['Close'].iloc[-1*xRange], "valueformat": ".6f", "position" : "bottom", "relative":False},
-                title = {"text": symbol+" Last {}-days".format(xRange)},
-                domain = {'y': [0.5, 0.7], 'x': [0.55, 0.75]}),
-            row=1, col=2)
+                fig.add_trace(go.Indicator(
+                    mode = "number+delta",
+                    value = round(df1['Close'].iloc[-1],4),
+                    number={'prefix': "$", 'font_size' : 40},
+                    delta = {"reference": df1['Close'].iloc[-1*xRange], "valueformat": ".6f", "position" : "bottom", "relative":False},
+                    title = {"text": symbol+" Last {}-days".format(xRange)},
+                    domain = {'y': [0.5, 0.7], 'x': [0.55, 0.75]}),
+                row=1, col=2)
 
-            if xRange > 1 :
-                fig.add_shape(type="rect",
-                            xref="x", yref="y",
-                            x0=df1['Date'].iloc[-1*xRange].date().strftime('%Y-%m-%d'), y0=df1['Close'].min(),
-                            x1=d1, y1=df1['Close'].max(),
-                            fillcolor=xColor(df1),
-                            row=1, col=1
-                            )
+                if xRange > 1 :
+                    fig.add_shape(type="rect",
+                                xref="x", yref="y",
+                                x0=df1['Date'].iloc[-1*xRange].date().strftime('%Y-%m-%d'), y0=df1['Close'].min(),
+                                x1=d1, y1=df1['Close'].max(),
+                                fillcolor=xColor(df1),
+                                row=1, col=1
+                                )
 
-            fig.update_layout(
-                template='simple_white',
-                showlegend=False,
-                font=dict(size=10),
-                autosize=False,
-                width=1400, height=300,
-                margin=dict(l=40, r=500, b=40, t=40),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                xaxis_showticklabels=True,
-            )
+                fig.update_layout(
+                    template='simple_white',
+                    showlegend=False,
+                    font=dict(size=10),
+                    autosize=False,
+                    width=1400, height=300,
+                    margin=dict(l=40, r=500, b=40, t=40),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    xaxis_showticklabels=True,
+                )
 
-            st.plotly_chart(fig)
-            st.write ('\n\n\n')
+                st.subheader('Share price of last '+str(xRange)+' days\n')
+                st.plotly_chart(fig)
+                st.write ('\n\n\n')
 
 
-            #--------  Display Return vs SP500 ----------------- 
-            st.subheader('Percent Return vs SP500')
-            per_return = px.line(new_df, x='Date', y=new_df.columns)
-            per_return.update_layout(autosize=True,width=1000)
-            st.write(per_return)
+                #--------  Display Return vs SP500 ----------------- 
+                st.subheader('Percent Return vs SP500')
+                per_return = px.line(new_df, x='Date', y=new_df.columns)
+                per_return.update_layout(autosize=True,width=1000)
+                st.write(per_return)
 
+            except:
+                pass
 
 
 
     #---------------  Technicals Selection  -------------------
     if st.sidebar.checkbox("Technicals"):
         with st.spinner('Loading Data...Please Wait...'):
-            if symbol: 
+            if symbol and 'symbol' in ticker.info:
 
                 #--------  Display Price/MA, MACD and RSI ----------------- 
                 df = ticker.history(period="1y")
@@ -490,29 +652,60 @@ def app():
 
 
     #---------------  Fundamentals Selection  -------------------
+
+                        # xText = ticker.info['fundFamily']
+                        # row = f'<p style="font-family:sans-serif; float: left;line-height: 14px; font-size: 14px;">Fund Family: {xText}</p>'
+                        # st.markdown(row, unsafe_allow_html=True)
+
     if st.sidebar.checkbox("Fundamentals"):
         with st.spinner('Loading Data...Please Wait...'):
-            if symbol: 
+            if symbol and 'symbol' in ticker.info:
                 st.header(f'{symbol.upper()} Fundamentals')
                 choice = st.sidebar.selectbox('Quarterly or Yearly Financials',['Yearly','Quarterly'])
 
                 left, right = st.beta_columns(2)
                 with left: 
-                    st.write('Market Cap:   ', ticker.info['marketCap'])            
-                    try: 
-                        st.write('Trailing P/E: ', ticker.info['trailingPE'])
-                    except KeyError as e: 
-                        st.write('Trailing P/E: None ')
-                    st.write('Dividend Rate:', ticker.info['dividendRate'])
-                    st.write('Book Value:   ', ticker.info['bookValue'])
+                    if 'marketCap' in ticker.info:
+                        if ticker.info['marketCap']:
+                            num = human_format(ticker.info['marketCap'])
+                            st.write('Market Cap: ', num) 
+                    if 'trailingPE' in ticker.info:
+                        if ticker.info['trailingPE']:
+                            st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
+                    if 'trailingEps' in ticker.info:
+                        if ticker.info['trailingEps']:
+                            st.write('Trailing EPS:   ', "%0.2f" % ticker.info['trailingEps'])
+                    if 'bookValue' in ticker.info:
+                        if ticker.info['bookValue']:
+                            st.write('Book Value:   ', "%0.2f" % ticker.info['bookValue'])
+                    if 'beta' in ticker.info:
+                        if ticker.info['beta']:
+                            st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
+                    if 'fiftyDayAverage' in ticker.info:
+                        if ticker.info['fiftyDayAverage']:
+                            st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
+                    if 'payoutRatio' in ticker.info:
+                        if ticker.info['payoutRatio']:
+                            st.write('Payout Ratio:   ', "%0.2f" % ticker.info['payoutRatio'])
                 with right: 
-                    st.write('Price to Sales: ',ticker.info['priceToSalesTrailing12Months'])
-                    st.write('Forward P/E: ',   ticker.info['forwardPE'])
-                    if ticker.info['dividendYield']:
-                        st.write('Dividend Yield (%): ',ticker.info['dividendYield'] * 100)
-                    else:
-                        st.write('Dividend Yield (%): ',ticker.info['dividendYield'])
-                    st.write('Price to Book: ', ticker.info['priceToBook'])
+                    if 'priceToSalesTrailing12Months' in ticker.info:
+                        if ticker.info['priceToSalesTrailing12Months']:
+                            st.write('Price to Sales: ',"%0.2f" % ticker.info['priceToSalesTrailing12Months'])
+                    if 'forwardPE' in ticker.info:
+                        if ticker.info['forwardPE']:
+                            st.write('Forward P/E: ',   "%0.2f" % ticker.info['forwardPE'])
+                    if 'forwardEps' in ticker.info:
+                        if ticker.info['forwardEps']:
+                            st.write('Forward EPS: ',   "%0.2f" % ticker.info['forwardEps'])
+                    if 'priceToBook' in ticker.info:
+                        if ticker.info['priceToBook']:
+                            st.write('Price to Book: ', "%0.2f" % ticker.info['priceToBook'])
+                    if 'pegRatio' in ticker.info:
+                        if ticker.info['pegRatio']:
+                            st.write('Peg Ratio: ', "%0.2f" % ticker.info['pegRatio'])
+                    if 'twoHundredDayAverage' in ticker.info:
+                        if ticker.info['twoHundredDayAverage']:
+                            st.write('200 Day Average: ', "%0.2f" % ticker.info['twoHundredDayAverage'])
 
                 try: 
                     if choice == 'Yearly':
@@ -540,48 +733,52 @@ def app():
     #---------------  Analyst Recommendations  -------------------
     if st.sidebar.checkbox("Analyst Ratings"):
         with st.spinner('Loading Data...Please Wait...'):
-            if symbol: 
+            if symbol and 'symbol' in ticker.info:
 
-                if type(ticker.recommendations) != type(None):
-                    recs = ticker.recommendations.tail(3)
-                    new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">Yahoo Finance</p>'
-                    st.markdown(new_title, unsafe_allow_html=True)
-                    recs.drop(recs.columns[[2, 3]], axis = 1, inplace = True)   # Drop Columns
-                    recs.reset_index(inplace=True)                              # Remove Index Column
-                    recs['Date'] = recs['Date'].dt.date                         # Set Date Column as index
-                    recs = recs.sort_index(ascending=False)                     # Sort df index ascending
-                    # st.table(recs.assign(hack='').set_index('hack'))            # Suppress showing index column
+                try:
+                    if type(ticker.recommendations) != type(None):
+                        recs = ticker.recommendations.tail(3)
+                        new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">Yahoo Finance</p>'
+                        st.markdown(new_title, unsafe_allow_html=True)
+                        recs.drop(recs.columns[[2, 3]], axis = 1, inplace = True)   # Drop Columns
+                        recs.reset_index(inplace=True)                              # Remove Index Column
+                        recs['Date'] = recs['Date'].dt.date                         # Set Date Column as index
+                        recs = recs.sort_index(ascending=False)                     # Sort df index ascending
+                        # st.table(recs.assign(hack='').set_index('hack'))            # Suppress showing index column
 
-                    col2 = recs['Date']
-                    col3 = recs['Firm']
-                    col4 = recs['To Grade']
-                    #the buffer = col1 and we never put anything in it
-                    buffer, col2, col3, col4 = st.beta_columns([1,2,2,2])
-                    col1a = str(recs['Date'][2])
-                    col1b = str(recs['Date'][1])
-                    col1c = str(recs['Date'][0])
-                    col2a = str(recs['Firm'][2])
-                    col2b = str(recs['Firm'][1])
-                    col2c = str(recs['Firm'][0])
-                    col3a = str(recs['To Grade'][2])
-                    col3b = str(recs['To Grade'][1])
-                    col3c = str(recs['To Grade'][0])
-                    with col2:
-                        # st.markdown(f'<p style="color: red; margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1a}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1a}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1b}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1c}</p>', unsafe_allow_html=True)
-                    with col3:
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2a}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2b}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2c}</p>', unsafe_allow_html=True)
-                    with col4:
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3a}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3b}</p>', unsafe_allow_html=True)
-                        st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3c}</p>', unsafe_allow_html=True)
+                        col2 = recs['Date']
+                        col3 = recs['Firm']
+                        col4 = recs['To Grade']
+                        #the buffer = col1 and we never put anything in it
+                        buffer, col2, col3, col4 = st.beta_columns([1,2,2,2])
+                        col1a = str(recs['Date'][2])
+                        col1b = str(recs['Date'][1])
+                        col1c = str(recs['Date'][0])
+                        col2a = str(recs['Firm'][2])
+                        col2b = str(recs['Firm'][1])
+                        col2c = str(recs['Firm'][0])
+                        col3a = str(recs['To Grade'][2])
+                        col3b = str(recs['To Grade'][1])
+                        col3c = str(recs['To Grade'][0])
+                        with col2:
+                            # st.markdown(f'<p style="color: red; margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1a}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1a}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1b}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col1c}</p>', unsafe_allow_html=True)
+                        with col3:
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2a}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2b}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col2c}</p>', unsafe_allow_html=True)
+                        with col4:
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3a}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3b}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="margin-top: 10; margin-bottom: 10;line-height: 8px; font-size:14px"> {col3c}</p>', unsafe_allow_html=True)
 
-                st.write ('\n\n')
+                    st.write ('\n\n')
 
+                except:
+                    st.write ('Error: Analyst Ratings (101)')
+                    pass
 
                 #---------------  Get Zacks Data  -------------------
                 df1 = getData_Zacks(symbol)
@@ -642,7 +839,7 @@ def app():
 
 
     if st.sidebar.checkbox("Add'l Sources"):
-        if symbol: 
+        if symbol and 'symbol' in ticker.info:
 
             st.markdown('---')
             row = '<p style="font-family:sans-serif; line-height: 14px; font-size: 16px;"><b>Research Ticker on any resources listed below:</b></p>'
@@ -724,9 +921,40 @@ def app():
                 link = f'[CNBC](https://www.cnbc.com/quotes/{symbol}/)'
                 st.markdown(link, unsafe_allow_html=True)
 
+
+            #-----------------------  LINE 5  ------------------------------------
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            with col1:
+                link = f'[GuruFocus](https://www.gurufocus.com/stock/{symbol}/summary)'
+                st.markdown(link, unsafe_allow_html=True)
+            with col2:
+                link = f'[Bloomberg](https://www.bloomberg.com/search?query={symbol})'
+                st.markdown(link, unsafe_allow_html=True)
+            # with col3:
+            #     link = f'[GuruFocus](https://www.gurufocus.com/stock/{symbol}/summary)'
+            #     st.markdown(link, unsafe_allow_html=True)
+            # with col4:
+            #     link = f'[Financhill](https://financhill.com/stock-price-chart/{symbol}-technical-analysis)'
+            #     st.markdown(link, unsafe_allow_html=True)
+            # with col5:
+            #     link = f'[CNBC](https://www.cnbc.com/quotes/{symbol}/)'
+            #     st.markdown(link, unsafe_allow_html=True)
+
+
+
+
             st.markdown('---')
 
 
-
-
     st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+
+
+
+
+def human_format(num):
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    # add more suffixes if you need them
+    return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])

@@ -776,6 +776,76 @@ def getData_Reddit():
 
 
 
+#================================================================================
+#                         MARKETWATCH                                           #
+#================================================================================
+def getData_MarketWatchETFs(ticker):
+
+    url = f'https://www.marketwatch.com/investing/fund/{ticker}'
+    
+    headers = { 
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36', 
+    'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 
+    'Accept-Language' : 'en-US,en;q=0.5',
+    'Accept-Encoding' : 'gzip', 
+    'DNT' : '1', # Do Not Track Request Header 
+    'Connection' : 'close'
+    }
+
+
+    try:
+
+        page = requests.get(url, headers=headers) 
+        soup = BeautifulSoup(page.text, 'lxml')
+        # res = requests.get(url.format(ticker))
+        # soup = bs(res.content, 'lxml')
+
+        xDividendDate = ''
+        xExpenseRatio = ''
+        xTurnover = ''
+        xBeta = ''
+        xList1 = []
+        xList2 = []
+
+        x1 = soup.find('ul', class_='list list--kv list--col50')
+        x2 = x1.find_all('li', class_='kv__item')
+        for i in x2:
+            x = i.get_text()
+            x = x.replace("\n", " ")
+            x = x[1:-2]
+            xList1.append(x)
+            if 'Net Expense Ratio' in x:
+                xExpenseRatio = x[18:]
+            if 'Beta' in x:
+                xBeta = x[5:]
+            if 'Turnover' in x:
+                xTurnover = x[11:]
+            if 'Ex-Dividend Date' in x:
+                xDividendDate = x[17:]
+
+        x1 = soup.find('ul', class_='list list--lipper')
+        x2 = x1.find_all('li', class_='list__item')
+        for i in x2:
+            x = i.get_text()
+            x = x.replace("\n", " ")
+            # x = x[3:-1] + ': ' + x[1:2]
+            x = x[1:2]
+            xList2.append(x)
+
+        print("xList1: " + str(xList1))
+        print("xList2: " + str(xList2))
+        print ("Beta: " + xBeta)
+        print ("Expense Ratio: " + xExpenseRatio)
+        print ("Turnover %: " + xTurnover)
+        print ("Ex-Dividend Date: " + xDividendDate)
+
+
+    except:
+        print ("Not Found Exception! - MarketWatchETFs")
+        pass
+
+
+    return xBeta, xExpenseRatio, xTurnover, xDividendDate, xList2
 
 
 

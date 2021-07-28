@@ -3,67 +3,166 @@ import pandas as pd
 import pygsheets
 from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
+from apps.stock_scrape1 import getData_MarketWatch
 
 
 def app():
 
     st.sidebar.markdown('---')
 
-    # if st.sidebar.checkbox("Test"):
-    #     gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-    #     sheet = gc.open('Research')
-    #     wks = sheet.worksheet_by_title('Watchlist')
-    #     df1 = wks.get_as_df()
-    #     st.table (df1)
+    def display_gsheet(gsheet):
 
-        # wks.update_value('A40', "Testing")
+        # if st.sidebar.checkbox("Watchlist"):
 
+            with st.spinner('Loading Data...Please Wait...'):
 
+                st.title(gsheet)
 
-    if st.sidebar.checkbox("My Watchlist"):
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+                sheet = gc.open('Research')
+                wks = sheet.worksheet_by_title(gsheet)
 
-        with st.spinner('Loading Data...Please Wait...'):
+                df1 = wks.get_as_df()
 
-            st.title('My Watchlist')
-
-            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            sheet = gc.open('Research')
-            wks = sheet.worksheet_by_title('Watchlist')
-
-            df1 = wks.get_as_df()
-
-            df1.drop(
-                columns=["7_day_Change", "30_day_Change", "90_day_Change"]
-            )
-
-            font_color = ['black'] * 6 + \
-                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
-                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
-                ['black']]
-
-            fig = go.Figure(data=[go.Table(
-                columnwidth=[1.2,5,1.7,0.7,1.3,1.3,1.3,1.3,2,1.3,1.3,1.3,1.3,1.3,1.3,1.3],
-                header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shrs', 'Cost', 
-                                        'Today', 'Today %', 'Gain/Loss', 'Dividend (Yield)',
-                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
-                                        'Mkt Cap', 'Out Shares', 'Volume']),
-                            fill_color='paleturquoise',
-                            align='center'),
-                cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
-                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
-                                df1.Dividend_Yield, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
-                                df1.PE, df1.Mkt_Cap, df1.Out_Shares, df1.Volume, ],
-                        fill_color='lavender',
-                        font_color=font_color,
-                        height=25,
-                        align = ['left', 'left', 'center', 'center', 'right']
-                    )
+                df1.drop(
+                    columns=["7_day_Change", "30_day_Change", "90_day_Change"]
                 )
-            ])
 
-            # fig.show()
-            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1300,height=800)
-            st.write(fig)
+                font_color = ['black'] * 6 + \
+                    [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+                    ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+                    ['black']]
+
+                fig = go.Figure(data=[go.Table(
+                    columnwidth=[1.2,5,1.7,0.7,1.3,1.3,1.3,1.3,2,1.3,1.3,1.3,1.3,1.3,1.3,1.3],
+                    header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shrs', 'Cost', 
+                                            'Today', 'Today %', 'Gain/Loss', 'Dividend (Yield)',
+                                            '52-Week Low', '52-Week High', 'EPS', 'PE',
+                                            'Mkt Cap', 'Out Shares', 'Volume']),
+                                fill_color='paleturquoise',
+                                align='center'),
+                    cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
+                                    df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+                                    df1.Dividend_Yield, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+                                    df1.PE, df1.Mkt_Cap, df1.Out_Shares, df1.Volume, ],
+                            fill_color='lavender',
+                            font_color=font_color,
+                            height=25,
+                            align = ['left', 'left', 'center', 'center', 'right']
+                        )
+                    )
+                ])
+
+                # fig.show()
+                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1300,height=800)
+                st.write(fig)
+
+
+    def display_header():
+        #---------------  Header Market Data  -------------------
+        symbol = 'AAPL'
+        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        if len(df_mw1.index) > 0:
+            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+            #---------------  Dow  -------------------
+            with col1:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[0]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[0]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  S&P 500  -------------------
+            with col2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>S&P 500</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[1]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[1]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[1]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+
+            #---------------  Nasdaq  -------------------
+            with col3:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Nasdaq</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[2]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw1.iloc[2]['Change'] + " (" + df_mw1.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[2]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  Gold  -------------------
+            with col4:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gold</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[0]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[0]['Change'] + " (" + df_mw2.iloc[0]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw2.iloc[0]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            #---------------  Oil  -------------------
+            with col5:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Oil</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[1]['Value']
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size: 14px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+                x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
+                xColor = 'black'
+                if '-' in df_mw1.iloc[1]['Change']:
+                    xColor = 'red'
+                else:
+                    xColor = 'green'
+                row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+
+        st.write ('\n\n\n\n')
+        st.markdown("---")
+
+
+
+
+    #------------------  MAIN  -----------------------------
+    display_header()
+
+    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'Buys', 'ETFs')) 
+
+    if xSelection == 'Watchlist':
+        display_gsheet (xSelection)
+    elif xSelection == 'Dividends': 
+        display_gsheet (xSelection)
+    elif xSelection == 'Buys': 
+        display_gsheet (xSelection)
+    elif xSelection == 'ETFs': 
+        display_gsheet (xSelection)
+
+
+
 
 
 

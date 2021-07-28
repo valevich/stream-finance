@@ -29,16 +29,17 @@ from apps.stock_scrape1 import getData_Dividata
 from apps.stock_scrape1 import getData_Tipranks
 from apps.stock_scrape1 import getData_StockInvest
 from apps.stock_scrape1 import getData_MarketWatch
+from apps.stock_scrape1 import getData_MarketWatchETFs
+
 
 
 def app():
 
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)    
 
-    ####################   SIDEBAR FUNCTIONS   ####################
 
-    #------ Function to DISPLAY SUMMARY ----------
-    def display_summary(symbol):
+    #------ Function to DISPLAY SUMMARY (STOCKS) ----------
+    def display_summary_equity(symbol):
 
         try:
             xPrice = "%0.2f" % (ticker.info['currentPrice'])                    # force display two decimals
@@ -116,8 +117,76 @@ def app():
             """
             st.markdown(row, unsafe_allow_html=True)
 
-        # except:
-        #     pass
+
+
+    #------ Function to DISPLAY SUMMARY (ETF) ----------
+    def display_summary_etf(xExpenseRatio):
+
+        try:
+
+            xPrice = "%0.2f" % (ticker.info['regularMarketPrice'])              # force display two decimals
+            xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
+            xOpen = "%0.2f" % (ticker.info['open'])                             # force display two decimals
+            xChange = "%0.2f" % (float(xPrice) - float(xPrevClose))
+            xChangePerc = "%0.2f" % ((float(xPrice) - float(xPrevClose)) / float(xPrevClose) * 100)
+            xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
+            xDayLowHigh = str("%0.2f" % ticker.info['dayLow']) + ' - ' + str("%0.2f" % ticker.info['dayHigh'])
+            xTotalAssets = human_format(ticker.info['totalAssets'])
+            xYield = str(ticker.info['yield'] * 100) + '%'
+            if 'trailingPE' in ticker.info:
+                xTrailingPE = "%0.2f" % ticker.info['trailingPE']
+            else:
+                xTrailingPE = '-'
+
+        except:
+            xPrice = 0
+            xPrevClose = 0
+            xOpen = 0
+            xChange = 0
+            xChangePerc = 0
+            xFiftyTwoWeekRange = 0
+            xYield = ''
+            xTrailingPE = 0
+            # xExpenseRatio = ''
+            xTotalAssets = 0
+            xDayLowHigh = ''
+
+        if float(xPrice) > float(xPrevClose):
+            xColor = 'green'
+        else : 
+            xColor = 'red'
+
+        row = \
+        f"""<div> 
+                <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Today's Price: "}</b></span>
+                <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
+            </div>
+        """
+        st.markdown(row, unsafe_allow_html=True)
+                
+        row = \
+            f"""<div> 
+                    <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
+                </div>
+            """
+        st.markdown(row, unsafe_allow_html=True)
+        
+        st.markdown('\n')
+
+        info_names = ["Previous Close: ", "Open: ", "Day Low-High", "52-Week Range: ",  \
+                      "Yield: ", "ExpenseRatio: ", "Total Assets: ", "PE Ratio (TTM): "]
+        info_list = [xPrevClose, xOpen, xDayLowHigh, xFiftyTwoWeekRange,  \
+                    xYield, xExpenseRatio, xTotalAssets, xTrailingPE]
+        for name,infoValue in zip(info_names, info_list):
+            row = \
+            f"""<div> 
+                    <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
+                    <span style='float: right;line-height: 10px; font-size:12px'> {infoValue}</span>
+                </div>
+            """
+            st.markdown(row, unsafe_allow_html=True)
+
+
 
 
     #------------------------ SETUP SIDEBAR TICKER INPUT -----------------------#
@@ -140,7 +209,7 @@ def app():
 
 
     if st.sidebar.checkbox("Save Ticker"):
-        
+
         with st.spinner('Loading Data...Please Wait...'):
 
             xPortfolio = st.sidebar.selectbox("Watchlist",
@@ -149,24 +218,25 @@ def app():
             if st.sidebar.button('Save'):
                 gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
                 sheet = gc.open('Research')
-                # wks = sheet.worksheet_by_title('Watchlist')
                 wks = sheet.worksheet_by_title(xPortfolio)
 
-                price = ticker.info['currentPrice']
-
-                if ticker.info['dividendRate']:
-                    xDividendRate = ticker.info['dividendRate']
-                    xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
-                    xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                if ticker.info['quoteType'] == 'EQUITY':
+                    price = ticker.info['currentPrice']
+                    if ticker.info['dividendRate']:
+                        xDividendRate = ticker.info['dividendRate']
+                        xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                        xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                    else:
+                        xDividend = '-'
                 else:
-                    xDividend = '-'
+                    price = ticker.info['regularMarketPrice']
+                    xDividend = str(ticker.info['yield'] * 100) + '%'
 
                 # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
                 # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
                 values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend]]
                 wks.append_table(values, start='A3', end=None, dimension='ROWS', overwrite=True)  # Added
 
-                # st.sidebar.text('Saved')
                 st.sidebar.write("Saved to: ", xPortfolio)
 
 
@@ -182,12 +252,9 @@ def app():
 
     #---------------  Header Market Data  -------------------
     with st.spinner('Loading Data...Please Wait...'):
-        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        # df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
+        df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch('AAPL')
         if len(df_mw1.index) > 0:
-            # new_title = '<p style="font-family:sans-serif; color:Blue; font-size: 20px;">MarketWatch.com Markets</p>'
-            # st.markdown(new_title, unsafe_allow_html=True)
-            # st.table(df_mw1.assign(hack='').set_index('hack'))
-
             buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
             #---------------  Dow  -------------------
             with col1:
@@ -274,23 +341,62 @@ def app():
     # st.markdown("")
 
 
-    #---------------  2 Header Column Section  -------------------
+    #---------------  Header (Equity) or (ETFs) Multi-Column Section  -------------------
     with st.spinner('Loading Data...Please Wait...'):
         if symbol and 'symbol' in ticker.info:
-            hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
-            with hdr1:
-                if ticker.info['logo_url']:
-                    st.image(ticker.info['logo_url'])
-            with hdr2: 
-                try:
-                    st.subheader(ticker.info['longName'])
-                    xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
-                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
-                    st.markdown(row, unsafe_allow_html=True)
-                except:
-                    pass
-            with hdr3:
-                display_summary(symbol)
+
+            #---------------  Header (Equity) 3 Columns  -------------------
+            if ticker.info['quoteType'] == 'EQUITY':
+                hdr1,hdr2,hdr3 = st.beta_columns([1,3,2])
+                with hdr1:
+                    if ticker.info['logo_url']:
+                        st.image(ticker.info['logo_url'])
+                with hdr2: 
+                    try:
+                        st.subheader(ticker.info['longName'])
+                        xIndustry = ticker.info['sector'] + " - " + ticker.info['industry']
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 14px;">{xIndustry}</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                    except:
+                        pass
+                with hdr3:
+                    display_summary_equity(symbol)            
+            else:
+                #---------------  Header (ETFs) 2 Columns  -------------------
+                xExpenseRatio = ''
+                xList2 = []
+                xDividendDate, xExpenseRatio, xTurnover, xBeta, xList2 = getData_MarketWatchETFs(symbol)
+                hdr1,hdr2, hdr3, hdr4 = st.beta_columns([4,2,1,2])
+                with hdr1: 
+                    try:
+                        st.subheader(ticker.info['longName'])
+                        xText = ticker.info['category']
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 16px;">Category: {xText}</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                    except:
+                        pass
+
+                with hdr2: 
+                        st.text ('\n')
+                        st.text ('\n')
+                        st.text ('\n')
+                        st.text ('\n')
+                        row = f'<p style="font-family:sans-serif; float: left;line-height: 12px; font-size: 14px;">YTD LIPPER RANKING</p>'
+                        st.markdown(row, unsafe_allow_html=True)
+                        info_names = ["Total Returns: ", "Consistent Return: ", "Preservation: ", \
+                                      "Tax Efficiency: ", "Expense: "]
+                        info_list = [xList2[0], xList2[1], xList2[2], xList2[3], xList2[4]]
+                        for name, infoValue in zip(info_names, info_list):
+                            row = \
+                            f"""<div> 
+                                    <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
+                                    <span style='float: right;line-height: 10px; font-size:12px'>{infoValue}</span>
+                                </div>
+                            """
+                            st.markdown(row, unsafe_allow_html=True)
+
+                with hdr4:
+                    display_summary_etf(xExpenseRatio)
 
             if 'longBusinessSummary' in ticker.info:
                 if ticker.info['longBusinessSummary']:
@@ -533,73 +639,120 @@ def app():
 
 
     #---------------  Fundamentals Selection  -------------------
+
+
     if st.sidebar.checkbox("Fundamentals"):
         with st.spinner('Loading Data...Please Wait...'):
             if symbol and 'symbol' in ticker.info:
+
                 st.header(f'{symbol.upper()} Fundamentals')
-                choice = st.sidebar.selectbox('Quarterly or Yearly Financials',['Yearly','Quarterly'])
+                
+                #---------------  Fundamentals (Equity) 2 Columns  -------------------
+                if ticker.info['quoteType'] == 'EQUITY':
 
-                left, right = st.beta_columns(2)
-                with left: 
-                    if 'marketCap' in ticker.info:
-                        if ticker.info['marketCap']:
-                            num = human_format(ticker.info['marketCap'])
-                            st.write('Market Cap: ', num) 
-                    if 'trailingPE' in ticker.info:
-                        if ticker.info['trailingPE']:
-                            st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
-                    if 'trailingEps' in ticker.info:
-                        if ticker.info['trailingEps']:
-                            st.write('Trailing EPS:   ', "%0.2f" % ticker.info['trailingEps'])
-                    if 'bookValue' in ticker.info:
-                        if ticker.info['bookValue']:
-                            st.write('Book Value:   ', "%0.2f" % ticker.info['bookValue'])
-                    if 'beta' in ticker.info:
-                        if ticker.info['beta']:
-                            st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
-                    if 'fiftyDayAverage' in ticker.info:
-                        if ticker.info['fiftyDayAverage']:
-                            st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
-                    if 'payoutRatio' in ticker.info:
-                        if ticker.info['payoutRatio']:
-                            st.write('Payout Ratio:   ', "%0.2f" % ticker.info['payoutRatio'])
-                with right: 
-                    if 'priceToSalesTrailing12Months' in ticker.info:
-                        if ticker.info['priceToSalesTrailing12Months']:
-                            st.write('Price to Sales: ',"%0.2f" % ticker.info['priceToSalesTrailing12Months'])
-                    if 'forwardPE' in ticker.info:
-                        if ticker.info['forwardPE']:
-                            st.write('Forward P/E: ',   "%0.2f" % ticker.info['forwardPE'])
-                    if 'forwardEps' in ticker.info:
-                        if ticker.info['forwardEps']:
-                            st.write('Forward EPS: ',   "%0.2f" % ticker.info['forwardEps'])
-                    if 'priceToBook' in ticker.info:
-                        if ticker.info['priceToBook']:
-                            st.write('Price to Book: ', "%0.2f" % ticker.info['priceToBook'])
-                    if 'pegRatio' in ticker.info:
-                        if ticker.info['pegRatio']:
-                            st.write('Peg Ratio: ', "%0.2f" % ticker.info['pegRatio'])
-                    if 'twoHundredDayAverage' in ticker.info:
-                        if ticker.info['twoHundredDayAverage']:
-                            st.write('200 Day Average: ', "%0.2f" % ticker.info['twoHundredDayAverage'])
+                    choice = st.sidebar.selectbox('Quarterly or Yearly Financials',['Yearly','Quarterly'])
 
-                try: 
-                    if choice == 'Yearly':
-                        y_earning_df = ticker.earnings.reset_index()
-                        y_rev = px.bar(data_frame=y_earning_df, x=y_earning_df.Year,y=y_earning_df.Revenue)
-                        y_earning = px.bar(data_frame=y_earning_df, x=y_earning_df.Year,y=y_earning_df.Earnings)
-                        st.write(y_earning)
-                        st.write(y_rev)
+                    buffer, left, right = st.beta_columns([0.5,2,2])
+                    with left: 
+                        if 'marketCap' in ticker.info:
+                            if ticker.info['marketCap']:
+                                num = human_format(ticker.info['marketCap'])
+                                st.write('Market Cap: ', num) 
+                        if 'trailingPE' in ticker.info:
+                            if ticker.info['trailingPE']:
+                                st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
+                        if 'trailingEps' in ticker.info:
+                            if ticker.info['trailingEps']:
+                                st.write('Trailing EPS:   ', "%0.2f" % ticker.info['trailingEps'])
+                        if 'bookValue' in ticker.info:
+                            if ticker.info['bookValue']:
+                                st.write('Book Value:   ', "%0.2f" % ticker.info['bookValue'])
+                        if 'beta' in ticker.info:
+                            if ticker.info['beta']:
+                                st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
+                        if 'fiftyDayAverage' in ticker.info:
+                            if ticker.info['fiftyDayAverage']:
+                                st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
+                        if 'payoutRatio' in ticker.info:
+                            if ticker.info['payoutRatio']:
+                                st.write('Payout Ratio:   ', "%0.2f" % ticker.info['payoutRatio'])
+                    with right: 
+                        if 'priceToSalesTrailing12Months' in ticker.info:
+                            if ticker.info['priceToSalesTrailing12Months']:
+                                st.write('Price to Sales: ',"%0.2f" % ticker.info['priceToSalesTrailing12Months'])
+                        if 'forwardPE' in ticker.info:
+                            if ticker.info['forwardPE']:
+                                st.write('Forward P/E: ',   "%0.2f" % ticker.info['forwardPE'])
+                        if 'forwardEps' in ticker.info:
+                            if ticker.info['forwardEps']:
+                                st.write('Forward EPS: ',   "%0.2f" % ticker.info['forwardEps'])
+                        if 'priceToBook' in ticker.info:
+                            if ticker.info['priceToBook']:
+                                st.write('Price to Book: ', "%0.2f" % ticker.info['priceToBook'])
+                        if 'pegRatio' in ticker.info:
+                            if ticker.info['pegRatio']:
+                                st.write('Peg Ratio: ', "%0.2f" % ticker.info['pegRatio'])
+                        if 'twoHundredDayAverage' in ticker.info:
+                            if ticker.info['twoHundredDayAverage']:
+                                st.write('200 Day Average: ', "%0.2f" % ticker.info['twoHundredDayAverage'])
+                    try: 
+                        if choice == 'Yearly':
+                            y_earning_df = ticker.earnings.reset_index()
+                            y_rev = px.bar(data_frame=y_earning_df, x=y_earning_df.Year,y=y_earning_df.Revenue)
+                            y_earning = px.bar(data_frame=y_earning_df, x=y_earning_df.Year,y=y_earning_df.Earnings)
+                            st.write(y_earning)
+                            st.write(y_rev)
+                        if choice == 'Quarterly':
+                            q_earning_df = ticker.quarterly_earnings.reset_index()
+                            rev = px.bar(data_frame = q_earning_df, x=q_earning_df.Quarter, y=q_earning_df.Revenue)
+                            earning = px.bar(data_frame = q_earning_df, x=q_earning_df.Quarter, y=q_earning_df.Earnings)
+                            st.write(earning)
+                            st.write(rev)
+                    except:
+                        st.write('No Data')
 
-                    if choice == 'Quarterly':
-                        q_earning_df = ticker.quarterly_earnings.reset_index()
-                        rev = px.bar(data_frame = q_earning_df, x=q_earning_df.Quarter, y=q_earning_df.Revenue)
-                        earning = px.bar(data_frame = q_earning_df, x=q_earning_df.Quarter, y=q_earning_df.Earnings)
-                        st.write(earning)
-                        st.write(rev)
-                    
-                except:
-                    st.write('No Data')
+                else:
+                    #---------------  Fundamentals (ETFs) 2 Columns  -------------------
+                    buffer, left, right = st.beta_columns([0.5,2,2])
+                    with left: 
+                        if 'fundFamily' in ticker.info:
+                            if ticker.info['fundFamily']:
+                                st.write('Fund Family: ', ticker.info['fundFamily']) 
+                        if 'trailingPE' in ticker.info:
+                            if ticker.info['trailingPE']:
+                                st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
+                        st.write('Turnover: ', xTurnover)
+                        st.write('Beta: ', xBeta)
+                        if 'beta' in ticker.info:
+                            if ticker.info['beta']:
+                                st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
+                        if ticker.info['volume']:
+                            num = human_format(ticker.info['volume'])
+                            st.write('Volume: ', num) 
+                            # st.write('Volume: ', "%0.2f" % ticker.info['volume'])
+                        if ticker.info['averageVolume']:
+                            num = human_format(ticker.info['averageVolume'])
+                            st.write('Average Volume: ', num) 
+                    with right: 
+                        if 'fiftyDayAverage' in ticker.info:
+                            if ticker.info['fiftyDayAverage']:
+                                st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
+                        if 'twoHundredDayAverage' in ticker.info:
+                            if ticker.info['twoHundredDayAverage']:
+                                st.write('200 Day Average: ', "%0.2f" % ticker.info['twoHundredDayAverage'])
+                        if 'threeYearAverageReturn' in ticker.info:
+                            if ticker.info['threeYearAverageReturn']:
+                                st.write('3-Year Average Return: ',"%0.2f" % ticker.info['threeYearAverageReturn'])
+                        if 'fiveYearAverageReturn' in ticker.info:
+                            if ticker.info['fiveYearAverageReturn']:
+                                st.write('5-Year Average Return: ',   "%0.2f" % ticker.info['fiveYearAverageReturn'])
+                        if 'trailingAnnualDividendRate' in ticker.info:
+                            if ticker.info['trailingAnnualDividendRate']:
+                                st.write('Trailing Annual Dividend Rate: ',   "%0.2f" % ticker.info['trailingAnnualDividendRate'])
+                        if 'trailingAnnualDividendYield' in ticker.info:
+                            if ticker.info['trailingAnnualDividendYield']:
+                                st.write('Trailing Annual Dividend Yield: ', "%0.2f" % ticker.info['trailingAnnualDividendYield'])
+
 
         st.write ('\n\n\n')
 
