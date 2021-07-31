@@ -1,8 +1,3 @@
-#------------------   Included code from stream18.py   ----------------------
-#------------------   Included code from stream19.py (Sidebar)  ----------------------
-#------------------   Included code from stream17.py (TA Chart)  ----------------------
-#------------------   Included code from stream6.py (Bollinger Bands)  ----------------------
-#------------------   Included code from stream10.py (Stock Price Graph)  ----------------------
 import streamlit as st 
 import requests
 import yfinance as yf 
@@ -30,7 +25,7 @@ from apps.stock_scrape1 import getData_Tipranks
 from apps.stock_scrape1 import getData_StockInvest
 from apps.stock_scrape1 import getData_MarketWatch
 from apps.stock_scrape1 import getData_MarketWatchETFs
-
+from apps.stock_scrape1 import getData_DividendInvestor
 
 
 def app():
@@ -208,21 +203,36 @@ def app():
 
 
 
+    #------------------------ SAVE TICKER TO GOOGLE SHEETS -----------------------#
     if st.sidebar.checkbox("Save Ticker"):
 
         with st.spinner('Loading Data...Please Wait...'):
 
-            xPortfolio = st.sidebar.selectbox("Watchlist",
-                                ['Watchlist', 'Dividends', 'Buys', 'ETFs'])
+            xPortfolio = st.sidebar.selectbox("Select Watchlist",
+                                ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
+
+            if xPortfolio == 'Analysts':
+                xAnalyst = st.sidebar.selectbox("Select Analyst",
+                   ['TipRanks: Alex Zukin', 'TipRanks: Amit Dayal', 'TipRanks: Brent Bracelin', 
+                    'TipRanks: Brian Fitzgerald', 'TipRanks: Brian Nagel', 'TipRanks: Brian Schwartz', 
+                    'TipRanks: Colin Rusch', 'TipRanks: Daniel Perlin', 'TipRanks: Gerard Cassidy', 
+                    'TipRanks: Heiko Ihle', 'TipRanks: Ittai Kidron','TipRanks: Jack Vander Aarde', 
+                    'TipRanks: Jason Seidl', 'TipRanks: John Pitzer','TipRanks: Jonathan Atkin', 
+                    'TipRanks: Josh Beck', 'TipRanks: Mark Lipacis', 'TipRanks: Patrick Brown',
+                    'TipRanks: Quinn Bolton', 'TipRanks: Rida Morwa','TipRanks: Shaul Eyal',
+                    'TipRanks: Terry Tillman','TipRanks: Youssef Squali'])
 
             if st.sidebar.button('Save'):
                 gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
                 sheet = gc.open('Research')
                 wks = sheet.worksheet_by_title(xPortfolio)
+                xDivExDate, xDivPayDate, xDivFreq = '', '', ''
 
                 if ticker.info['quoteType'] == 'EQUITY':
                     price = ticker.info['currentPrice']
                     if ticker.info['dividendRate']:
+                        if ticker.info['dividendRate'] > 0:
+                            xDivExDate, xDivPayDate, xDivFreq = getData_DividendInvestor(symbol)  # GET DIV PAY DATE, ETC
                         xDividendRate = ticker.info['dividendRate']
                         xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
                         xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
@@ -234,8 +244,13 @@ def app():
 
                 # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
                 # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
-                values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend]]
-                wks.append_table(values, start='A3', end=None, dimension='ROWS', overwrite=True)  # Added
+
+                if xPortfolio == 'Analysts':
+                    values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                else:
+                    values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
 
                 st.sidebar.write("Saved to: ", xPortfolio)
 

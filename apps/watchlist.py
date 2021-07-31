@@ -10,54 +10,6 @@ def app():
 
     st.sidebar.markdown('---')
 
-    def display_gsheet(gsheet):
-
-        # if st.sidebar.checkbox("Watchlist"):
-
-            with st.spinner('Loading Data...Please Wait...'):
-
-                st.title(gsheet)
-
-                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-                sheet = gc.open('Research')
-                wks = sheet.worksheet_by_title(gsheet)
-
-                df1 = wks.get_as_df()
-
-                df1.drop(
-                    columns=["7_day_Change", "30_day_Change", "90_day_Change"]
-                )
-
-                font_color = ['black'] * 6 + \
-                    [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
-                    ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
-                    ['black']]
-
-                fig = go.Figure(data=[go.Table(
-                    columnwidth=[1.2,5,1.7,0.7,1.3,1.3,1.3,1.3,2,1.3,1.3,1.3,1.3,1.3,1.3,1.3],
-                    header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shrs', 'Cost', 
-                                            'Today', 'Today %', 'Gain/Loss', 'Dividend (Yield)',
-                                            '52-Week Low', '52-Week High', 'EPS', 'PE',
-                                            'Mkt Cap', 'Out Shares', 'Volume']),
-                                fill_color='paleturquoise',
-                                align='center'),
-                    cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
-                                    df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
-                                    df1.Dividend_Yield, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
-                                    df1.PE, df1.Mkt_Cap, df1.Out_Shares, df1.Volume, ],
-                            fill_color='lavender',
-                            font_color=font_color,
-                            height=25,
-                            align = ['left', 'left', 'center', 'center', 'right']
-                        )
-                    )
-                ])
-
-                # fig.show()
-                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1300,height=800)
-                st.write(fig)
-
-
     def display_header():
         #---------------  Header Market Data  -------------------
         symbol = 'AAPL'
@@ -146,20 +98,169 @@ def app():
 
 
 
+    @st.cache(show_spinner=False)
+    def load_gsheet(gsheet):
+            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            sheet = gc.open('Research')
+            wks = sheet.worksheet_by_title(gsheet)
+            df = wks.get_as_df()
+
+            if gsheet != 'AnalystsRankings':
+                df.drop(
+                    columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
+                )
+                for i in range(len(df)):
+                    if '(' in df['Dividend_Yield'].values[i]:
+                        xDividend_Yield = str(df.Dividend_Yield)
+                        xDividend_Yield = xDividend_Yield[xDividend_Yield.find("(")+1:xDividend_Yield.find(")")]
+                        df['Dividend_Yield'].values[i] = xDividend_Yield
+
+            return df
+
+
+
+    def display_gsheet(gsheet):
+        with st.spinner('Loading Data...Please Wait...'):
+
+            st.title(gsheet)
+            df1 = load_gsheet(gsheet)
+
+            # st.write(df1.columns)
+            # buyDate = df1['Buy_Date'].unique()
+            # buyDate_SELECTED = st.sidebar.multiselect('Select countries', buyDate)
+            # mask_buyDate = df1['Buy_Date'].isin(buyDate_SELECTED)
+            # df1 = df1[mask_buyDate]
+
+            # st.write(df1.columns)
+            # cols = st.sidebar.multiselect('select columns:', df1.columns)
+            # st.write('You selected:', cols)
+            # st.write(df1[cols])
+
+            font_color = ['black'] * 6 + \
+                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+                ['black']]
+
+            fig = go.Figure(data=[go.Table(
+                columnwidth=[1,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
+                header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shares', 'Cost', 
+                                        'Today', 'Today %', 'Gain/Loss', 'Div Yield',
+                                        'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
+                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
+                                        'Mkt Cap', 'Volume']),
+                            fill_color='paleturquoise',
+                            font=dict(color='black', family='Arial, sans-serif', size=10),
+                            align='center'),
+                cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
+                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+                                df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
+                                df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+                                df1.PE, df1.Mkt_Cap, df1.Volume, ],
+                        fill_color='lavender',
+                        font_color=font_color,
+                        height=25,
+                        font=dict(size=11),
+                        align = ['left', 'left', 'center', 'center', 'right']
+                    )
+                )
+            ])
+
+            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1200,height=800)
+            st.write(fig)
+
+
+
+    def display_gsheet2(gsheet):
+        with st.spinner('Loading Data...Please Wait...'):
+
+            if st.sidebar.checkbox("Show Analyst Rankings"):
+                st.title('Analyst Rankings')
+                df0 = load_gsheet('AnalystsRankings')
+
+                font_color = ['black'] * 2 + \
+                    [['red' if  boolv else 'green' for boolv in df0['Average_Return'].str.contains('-')],
+                    ['black']]
+
+                fig = go.Figure(data=[go.Table(
+                    columnwidth=[4,1.5,1.5],
+                    header=dict(values=list(['Analyst', 'Total Tickers', 'Average Return']),
+                            fill_color='paleturquoise',
+                            font=dict(color='black', family='Arial, sans-serif', size=10),
+                            align=['left', 'right']),
+                    cells=dict(values=[df0.Source, df0.Tickers, df0.Average_Return],
+                            fill_color='lavender',
+                            font_color=font_color,
+                            height=25,
+                            font=dict(size=11),
+                            align=['left', 'right']
+                        )
+                    )
+                ])
+
+                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=500,height=700)
+                st.write(fig)
+
+
+
+            df1 = load_gsheet(gsheet)
+            st.title(gsheet)
+
+            xAnalysts = df1['Source'].unique().tolist()
+            xAnalysts.insert(0,'All')
+            xAnalystsChoice = st.sidebar.selectbox('Select Analyst:', xAnalysts)
+            if xAnalystsChoice != 'All':
+                df1 = df1.loc[(df1['Source'] == xAnalystsChoice)]
+
+
+            font_color = ['black'] * 6 + \
+                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+                ['black']]
+
+            fig = go.Figure(data=[go.Table(
+                columnwidth=[1,3.5,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
+                header=dict(values=list(['Symbol', 'Name',  'Analyst', 'Buy Date', 'Shares', 'Cost', 
+                                        'Today', 'Today %', 'Gain/Loss', 'Div Yield',
+                                        'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
+                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
+                                        'Mkt Cap', 'Volume']),
+                            fill_color='paleturquoise',
+                            font=dict(color='black', family='Arial, sans-serif', size=10),
+                            align='center'),
+                cells=dict(values=[df1.Ticker, df1.Company, df1.Source, df1.Buy_Date, df1.Shares,
+                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+                                df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
+                                df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+                                df1.PE, df1.Mkt_Cap, df1.Volume, ],
+                        fill_color='lavender',
+                        font_color=font_color,
+                        height=25,
+                        font=dict(size=11),
+                        align = ['left', 'left', 'left', 'center', 'center', 'right']
+                    )
+                )
+            ])
+
+            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1400,height=800)
+            st.write(fig)
+
+
 
     #------------------  MAIN  -----------------------------
     display_header()
 
-    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'Buys', 'ETFs')) 
+    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'ETFs', 'ToBuy', 'Analysts')) 
 
     if xSelection == 'Watchlist':
         display_gsheet (xSelection)
     elif xSelection == 'Dividends': 
         display_gsheet (xSelection)
-    elif xSelection == 'Buys': 
-        display_gsheet (xSelection)
     elif xSelection == 'ETFs': 
         display_gsheet (xSelection)
+    elif xSelection == 'ToBuy': 
+        display_gsheet (xSelection)
+    elif xSelection == 'Analysts': 
+        display_gsheet2 (xSelection)
 
 
 

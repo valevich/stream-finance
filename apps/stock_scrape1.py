@@ -551,21 +551,13 @@ def getData_MarketWatch(ticker):
         xRatings = soup.find('table', class_='table table-primary align--left border--dotted')
         xRatings = xRatings.get_text()
         xRatings = xRatings.replace("\n", " ")
-        # print("MarketWatch Ratings: " + xRatings)
         xHeader = xRatings[xRatings.find("3M"):xRatings.find("Current")+7]
-        # print ("MarketWatch Header: " + xHeader)
         xBuy = xRatings[xRatings.find("Buy"):xRatings.find("Overweight")]
-        # print ("MarketWatch Buy: " + xBuy)
         xOverweight = xRatings[xRatings.find("Overweight"):xRatings.find("Hold")]
-        # print ("MarketWatch Overweight: " + xOverweight)
         xHold = xRatings[xRatings.find("Hold"):xRatings.find("Underweight")]
-        # print ("MarketWatch Hold: " + xHold)
         xUnderweight = xRatings[xRatings.find("Underweight"):xRatings.find("Sell")]
-        # print ("MarketWatch Hold: " + xUnderweight)
         xSell = xRatings[xRatings.find("Sell"):xRatings.find("Consensus")]
-        # print ("MarketWatch Hold: " + xSell)
         xConsensus = xRatings[xRatings.find("Consensus"):]
-        # print ("MarketWatch Hold: " + xConsensus)
         xBuy = xBuy.split()                         # split string into list and remove any spaces
         xOverweight = xOverweight.split()           # split string into list and remove any spaces
         xHold = xHold.split()                       # split string into list and remove any spaces
@@ -665,35 +657,24 @@ def getData_Reddit():
     try:
 
         page = requests.get(url, headers=headers) 
-        # print ('=0')
         # soup = BeautifulSoup(page.text, 'lxml')
         soup = BeautifulSoup(page.text, 'html5lib')
         # soup = BeautifulSoup(page, 'html.parser')
         # text = soup.get_text()
 
 
-        # print ('=0a')
         test = soup.find("p", {"id": "unixtime_p"}).text.strip()
-        # print ('=0b')
         test = test[11:]
-        # print ('=0c')
         unix_timestamp = float(test)
-        # print ('=0d')
         local_timezone = tzlocal.get_localzone() # get pytz timezone
-        # print ('=0e')
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        # print ('=0f')
         local_time2 = str(local_time)[:-6]
-        # print ('As Of Time: ' + local_time)
 
-        # print ('=1')
         trend_table = soup.find(class_='trending_table')
 
-        # print ('=2')
         df1 = pd.read_html(str(trend_table))
         df1 = df1[0]
 
-        # print ('=3')
         xRows = len(df1.index)
         xTotal = ''
         xBuy = ''
@@ -702,44 +683,24 @@ def getData_Reddit():
 
 
         for index in range(xRows)[1:]:          # [1:] - To skip first row
-            # print ('=4')
             prices = soup.find_all("tr")
             xCntr = 1
             for x in prices[index].find_all("td"):  #.text.strip().split("\n")
                 print ('x: ' + str(x))
-                # print ('=5')
                 if xCntr == 1:
                     xTotal = str(x.get_text().strip())
-                    # print (xTotal)
                 elif xCntr == 2:
                     xBuy = str(x.get_text().strip())
-                    # print (xCntr)
                 elif xCntr == 3:
                     xTicker = str(x.get_text().strip())
-                    # print (xTicker)
-                # elif xCntr == 4:
-                #     print ('xString##: ' + str(x))
                 xCntr += 1
 
-            # print ('=6')
-            # print ('xString: ' + str(x))
-            # for br in x.find_all("br"):
-            #     br.replace_with("xxxxxx")
-            print ('xString: ' + str(x))
             x2 = str(x).replace("&amp;", "&")
             x2 = str(x).replace("&amp;", "&")
-            # print (x2)
 
             xString = x2
-            # print ('=6b')
-
-            # print (xString)
-
-            # print ('=6c')
             xCompany = xString[+4:xString.find("<br/>")]
-            # print ('=7')
             xIndustry = xString[xString.find("<br/>")+5:xString.find("</td>")]
-            # print ('=8')
             xBuyList = str(xBuy).split()             # split string into list and remove any spaces
 
             # print('Ticker: '+ str(xTicker))
@@ -845,6 +806,48 @@ def getData_MarketWatchETFs(ticker):
 
 
     return xBeta, xExpenseRatio, xTurnover, xDividendDate, xList2
+
+
+
+#================================================================================
+#                         DIVIDENDINVESTOR.COM                                  #
+#================================================================================
+def getData_DividendInvestor(ticker):
+
+    url = f'https://www.dividendinvestor.com/dividend-quote/{ticker}/'
+    
+    headers = { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36', 
+        'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 
+        'Accept-Language' : 'en-US,en;q=0.5',
+        'Accept-Encoding' : 'gzip', 
+        'DNT' : '1', # Do Not Track Request Header 
+        'Connection' : 'close'
+    }
+
+
+    try:
+
+        page = requests.get(url, headers=headers) 
+        soup = BeautifulSoup(page.text, 'lxml')
+
+        xList1 = []
+        x1 = soup.find('div', id='dividend-right')
+        x2 = x1.find_all('span', class_='data')
+        for i in x2:
+            x = i.get_text()
+            xList1.append(x)
+
+        print("xList1: " + str(xList1))
+        print("Dividend Ex Date: " + str(xList1[4]))
+        print("Dividend Pay Date: " + str(xList1[6]))
+        print("Dividend Frequency: " + str(xList1[9]))
+
+    except:
+        print ("Not Found Exception! - MarketWatchETFs")
+        pass
+
+    return str(xList1[4]), str(xList1[6]), str(xList1[9])
 
 
 
