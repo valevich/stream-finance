@@ -194,12 +194,9 @@ def app():
         if not symbol.isupper():
             symbol = symbol.upper()
 
-        # if no ticker entered
         if not symbol: 
             st.sidebar.markdown('')
             st.sidebar.markdown("""<div style='text-align: center;'>Please search a ticker to see results.</div>""", unsafe_allow_html=True)
-        # else: 
-        #     st.sidebar.markdown('---')
 
 
     #------------------------ LOAD GOOGLE SHEETS -----------------------#
