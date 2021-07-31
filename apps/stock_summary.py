@@ -202,57 +202,86 @@ def app():
         #     st.sidebar.markdown('---')
 
 
+    #------------------------ LOAD GOOGLE SHEETS -----------------------#
+    # @st.cache(show_spinner=False)
+    def load_gsheet(gsheet):
+            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            sheet = gc.open('Research')
+            wks = sheet.worksheet_by_title(gsheet)
+            df = wks.get_as_df()
+
+            # if gsheet != 'AnalystsRankings':
+            #     df.drop(
+            #         columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
+            #     )
+            #     for i in range(len(df)):
+            #         if '(' in df['Dividend_Yield'].values[i]:
+            #             xDividend_Yield = str(df.Dividend_Yield)
+            #             xDividend_Yield = xDividend_Yield[xDividend_Yield.find("(")+1:xDividend_Yield.find(")")]
+            #             df['Dividend_Yield'].values[i] = xDividend_Yield
+
+            return df
+
 
     #------------------------ SAVE TICKER TO GOOGLE SHEETS -----------------------#
     if st.sidebar.checkbox("Save Ticker"):
 
         with st.spinner('Loading Data...Please Wait...'):
 
+            xError = '0'
             xPortfolio = st.sidebar.selectbox("Select Watchlist",
                                 ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
 
+            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            sheet = gc.open('Research')
+            wks = sheet.worksheet_by_title(xPortfolio)
+            df1 = wks.get_as_df()
+
             if xPortfolio == 'Analysts':
-                xAnalyst = st.sidebar.selectbox("Select Analyst",
-                   ['TipRanks: Alex Zukin', 'TipRanks: Amit Dayal', 'TipRanks: Brent Bracelin', 
-                    'TipRanks: Brian Fitzgerald', 'TipRanks: Brian Nagel', 'TipRanks: Brian Schwartz', 
-                    'TipRanks: Colin Rusch', 'TipRanks: Daniel Perlin', 'TipRanks: Gerard Cassidy', 
-                    'TipRanks: Heiko Ihle', 'TipRanks: Ittai Kidron','TipRanks: Jack Vander Aarde', 
-                    'TipRanks: Jason Seidl', 'TipRanks: John Pitzer','TipRanks: Jonathan Atkin', 
-                    'TipRanks: Josh Beck', 'TipRanks: Mark Lipacis', 'TipRanks: Patrick Brown',
-                    'TipRanks: Quinn Bolton', 'TipRanks: Rida Morwa','TipRanks: Shaul Eyal',
-                    'TipRanks: Terry Tillman','TipRanks: Youssef Squali'])
+                xAnalysts = df1['Source'].unique().tolist()
+                xAnalysts.insert(0,'<New>')
+                xAnalyst = st.sidebar.selectbox('Select Analyst:', xAnalysts)
 
+                name = ''
+                if xAnalyst == '<New>':
+                    name = st.sidebar.text_input("Enter Analyst Name (required)")
+                    xAnalyst = name
+            
             if st.sidebar.button('Save'):
-                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-                sheet = gc.open('Research')
-                wks = sheet.worksheet_by_title(xPortfolio)
-                xDivExDate, xDivPayDate, xDivFreq = '', '', ''
-
-                if ticker.info['quoteType'] == 'EQUITY':
-                    price = ticker.info['currentPrice']
-                    if ticker.info['dividendRate']:
-                        if ticker.info['dividendRate'] > 0:
-                            xDivExDate, xDivPayDate, xDivFreq = getData_DividendInvestor(symbol)  # GET DIV PAY DATE, ETC
-                        xDividendRate = ticker.info['dividendRate']
-                        xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
-                        xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
-                    else:
-                        xDividend = '-'
-                else:
-                    price = ticker.info['regularMarketPrice']
-                    xDividend = str(ticker.info['yield'] * 100) + '%'
-
-                # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
-                # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
 
                 if xPortfolio == 'Analysts':
-                    values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
-                else:
-                    values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                    if xAnalyst == '<New>' or len(xAnalyst) == 0:
+                        if len(name) == 0:
+                            xError = '1'
+                            st.warning("Please fill out required field!")
 
-                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+                if xError != '1':
+                    xDivExDate, xDivPayDate, xDivFreq = '', '', ''
+                    if ticker.info['quoteType'] == 'EQUITY':
+                        price = ticker.info['currentPrice']
+                        if ticker.info['dividendRate']:
+                            if ticker.info['dividendRate'] > 0:
+                                xDivExDate, xDivPayDate, xDivFreq = getData_DividendInvestor(symbol)  # GET DIV PAY DATE, ETC
+                            xDividendRate = ticker.info['dividendRate']
+                            xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                            xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                        else:
+                            xDividend = '-'
+                    else:
+                        price = ticker.info['regularMarketPrice']
+                        xDividend = str(ticker.info['yield'] * 100) + '%'
 
-                st.sidebar.write("Saved to: ", xPortfolio)
+                    # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
+                    # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
+
+                    if xPortfolio == 'Analysts':
+                        values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                    else:
+                        values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+
+                    wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+
+                    st.sidebar.write("Saved to: ", xPortfolio)
 
 
     st.sidebar.markdown('---')

@@ -98,7 +98,7 @@ def app():
 
 
 
-    @st.cache(show_spinner=False)
+    # @st.cache(show_spinner=False)
     def load_gsheet(gsheet):
             gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
             sheet = gc.open('Research')
