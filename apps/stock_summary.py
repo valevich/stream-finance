@@ -1,5 +1,6 @@
 import streamlit as st 
-from sys import platform
+# from sys import platform
+import os
 import requests
 import yfinance as yf 
 import plotly.graph_objects as go 
@@ -18,8 +19,6 @@ from google.oauth2 import service_account
 from gspread_pandas import Spread, Client
 from gsheetsdb import connect
 
-
-
 from apps.stock_scrape1 import getData_Zacks
 from apps.stock_scrape1 import getData_Dividata
 from apps.stock_scrape1 import getData_Tipranks
@@ -30,6 +29,8 @@ from apps.stock_scrape1 import getData_DividendInvestor
 
 
 def app():
+
+    is_prod = os.environ.get('IS_HEROKU', None)
 
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)    
 
@@ -211,11 +212,11 @@ def app():
 
             # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
-            if platform == "darwin":
-                print ("Platform: OS X")
-                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            else:    
+            # if platform == "darwin":
+            if is_prod:
                 gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+            else:    
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
             sheet = gc.open('Research')
             wks = sheet.worksheet_by_title(xPortfolio)

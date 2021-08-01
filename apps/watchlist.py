@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from sys import platform
+# from sys import platform
+import os
 import pygsheets
 from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
@@ -8,6 +9,8 @@ from apps.stock_scrape1 import getData_MarketWatch
 
 
 def app():
+
+    is_prod = os.environ.get('IS_HEROKU', None)
 
     st.sidebar.markdown('---')
 
@@ -103,11 +106,11 @@ def app():
     def load_gsheet(gsheet):
             # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
-            if platform == "darwin":
-                print ("Platform: OS X")
-                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            else:    
+            # if platform == "darwin":
+            if is_prod:
                 gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+            else:    
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
             sheet = gc.open('Research')
             wks = sheet.worksheet_by_title(gsheet)
