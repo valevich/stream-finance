@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from sys import platform
 import pygsheets
 from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
@@ -101,7 +102,12 @@ def app():
     # @st.cache(show_spinner=False)
     def load_gsheet(gsheet):
             # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+
+            if platform == "darwin":
+                print ("Platform: OS X")
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            else:    
+                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
 
             sheet = gc.open('Research')
             wks = sheet.worksheet_by_title(gsheet)

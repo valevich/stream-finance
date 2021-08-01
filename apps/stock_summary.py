@@ -1,4 +1,5 @@
 import streamlit as st 
+from sys import platform
 import requests
 import yfinance as yf 
 import plotly.graph_objects as go 
@@ -209,7 +210,12 @@ def app():
                                 ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
 
             # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+
+            if platform == "darwin":
+                print ("Platform: OS X")
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+            else:    
+                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
 
             sheet = gc.open('Research')
             wks = sheet.worksheet_by_title(xPortfolio)
