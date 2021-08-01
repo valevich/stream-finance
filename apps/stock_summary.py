@@ -199,27 +199,6 @@ def app():
             st.sidebar.markdown("""<div style='text-align: center;'>Please search a ticker to see results.</div>""", unsafe_allow_html=True)
 
 
-    #------------------------ LOAD GOOGLE SHEETS -----------------------#
-    # @st.cache(show_spinner=False)
-    def load_gsheet(gsheet):
-            gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-            sheet = gc.open('Research')
-            wks = sheet.worksheet_by_title(gsheet)
-            df = wks.get_as_df()
-
-            # if gsheet != 'AnalystsRankings':
-            #     df.drop(
-            #         columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
-            #     )
-            #     for i in range(len(df)):
-            #         if '(' in df['Dividend_Yield'].values[i]:
-            #             xDividend_Yield = str(df.Dividend_Yield)
-            #             xDividend_Yield = xDividend_Yield[xDividend_Yield.find("(")+1:xDividend_Yield.find(")")]
-            #             df['Dividend_Yield'].values[i] = xDividend_Yield
-
-            return df
-
-
     #------------------------ SAVE TICKER TO GOOGLE SHEETS -----------------------#
     if st.sidebar.checkbox("Save Ticker"):
 
