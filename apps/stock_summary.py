@@ -1,5 +1,4 @@
 import streamlit as st 
-# from sys import platform
 import os
 import requests
 import yfinance as yf 
@@ -38,6 +37,8 @@ def app():
     #------ Function to DISPLAY SUMMARY (STOCKS) ----------
     def display_summary_equity(symbol):
 
+        # st.write (ticker.info)
+        # st.write (len(ticker.info['logo_url']))
         try:
             xPrice = "%0.2f" % (ticker.info['currentPrice'])                    # force display two decimals
             xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
@@ -63,6 +64,15 @@ def app():
                     xTrailingEps = '-'
             else:
                 xTrailingEps = '-'
+            xVolume = human_format(ticker.info['volume'])
+
+            if len(df_mw4) > 0:
+                xAfterMarketPrice = df_mw4.iloc[0]['Price']
+                xAfterMarketChange = df_mw4.iloc[0]['Change']
+                xAfterMarketPerc = df_mw4.iloc[0]['ChangePerc']
+                xAfterMarketVolume = df_mw4.iloc[0]['Volume']
+                xAfterMarketTime = df_mw4.iloc[0]['AsofTime']
+                xMarketStatus = df_mw4.iloc[0]['MarketStatus']
 
         except:
             xPrice = 0
@@ -82,34 +92,66 @@ def app():
         else : 
             xColor = 'red'
 
+        # ------  Current Price Row 1 and Change Percentage Row 2
         row = \
         f"""<div> 
-                <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Today's Price: "}</b></span>
+                <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Current Price: "}</b></span>
                 <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
             </div>
         """
         st.markdown(row, unsafe_allow_html=True)
-                
         row = \
             f"""<div> 
-                    <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
+                    <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 2px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
                 </div>
             """
         st.markdown(row, unsafe_allow_html=True)
         
         st.markdown('\n')
 
-        # num = human_format(ticker.info['marketCap'])
+        # ------  After Hours Price Row 1 and Change Percentage Row 2
+        if len(df_mw4) > 0:
+            if xMarketStatus != 'Open':
+                xAfterMarketPrice = xAfterMarketPrice.replace("$", "")
+                xAfterMarketPrice = xAfterMarketPrice.replace(",", "")
+                xAfterMarketPrice = xAfterMarketPrice.strip()
+                # if float(xAfterMarketPrice) >= float(xPrice):
+                if '-' in xAfterMarketChange:
+                    xAftHrsColor = 'red'
+                else : 
+                    xAftHrsColor = 'green'
+                row = \
+                f"""<div> 
+                        <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 0px; font-size:12px'><b>{xMarketStatus}:</b></span>
+                        <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 0px; font-size:12px'><b>{xAfterMarketPrice}</b></span>
+                    </div>
+                """
+                st.markdown(row, unsafe_allow_html=True)
+                row = \
+                    f"""<div> 
+                            <span style='float: right; color: {xAftHrsColor}; margin-top: 0; margin-bottom: 0; line-height: 0px; font-size:12px'><b>{xAfterMarketChange} ({xAfterMarketPerc}%)</b></span>
+                        </div>
+                    """
+                st.markdown(row, unsafe_allow_html=True)
+                row = \
+                    f"""<div> 
+                            <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 0px; font-size:10px'>As of: {xAfterMarketTime}</span>
+                        </div>
+                    """
+                st.markdown(row, unsafe_allow_html=True)
+                st.markdown('\n')
 
-        info_names = ["Previous Close: ", "Open: ", "52-Week Range: ", "Dividend Rate & Yield: ", \
-            "Market Cap: ", "PE Ratio (TTM): ", "EPS (TTM): "]
-        info_list = [xPrevClose, xOpen, xFiftyTwoWeekRange, xDividend, \
+
+        # ------  Additional Stock Info Multi-Rows
+        info_names = ["Previous Close: ", "Open: ", "52-Week Range: ", "Volume: ", \
+                      "Dividend Rate & Yield: ", "Market Cap: ", "PE Ratio (TTM): ", "EPS (TTM): "]
+        info_list = [xPrevClose, xOpen, xFiftyTwoWeekRange, xVolume, xDividend, \
                     xMarketCap, xTrailingPE, xTrailingEps]
         for name,infoValue in zip(info_names, info_list):
             row = \
             f"""<div> 
-                    <span style='float: left;line-height: 10px; font-size:12px'><b>{name}</b></span>
-                    <span style='float: right;line-height: 10px; font-size:12px'> {infoValue}</span>
+                    <span style='float: left;line-height: 5px; font-size:12px'><b>{name}</b></span>
+                    <span style='float: right;line-height: 5px; font-size:12px'> {infoValue}</span>
                 </div>
             """
             st.markdown(row, unsafe_allow_html=True)
@@ -129,7 +171,8 @@ def app():
             xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
             xDayLowHigh = str("%0.2f" % ticker.info['dayLow']) + ' - ' + str("%0.2f" % ticker.info['dayHigh'])
             xTotalAssets = human_format(ticker.info['totalAssets'])
-            xYield = str(ticker.info['yield'] * 100) + '%'
+            # xYield = str(ticker.info['yield'] * 100) + '%'
+            xYield = str(human_format(ticker.info['yield'] * 100)) + '%'
             if 'trailingPE' in ticker.info:
                 xTrailingPE = "%0.2f" % ticker.info['trailingPE']
             else:
@@ -172,7 +215,7 @@ def app():
 
         info_names = ["Previous Close: ", "Open: ", "Day Low-High", "52-Week Range: ",  \
                       "Yield: ", "ExpenseRatio: ", "Total Assets: ", "PE Ratio (TTM): "]
-        info_list = [xPrevClose, xOpen, xDayLowHigh, xFiftyTwoWeekRange,  \
+        info_list = [xPrevClose, xOpen, xDayLowHigh, xFiftyTwoWeekRange, \
                     xYield, xExpenseRatio, xTotalAssets, xTrailingPE]
         for name,infoValue in zip(info_names, info_list):
             row = \
@@ -187,7 +230,6 @@ def app():
 
 
     #------------------------ SETUP SIDEBAR TICKER INPUT -----------------------#
-
     with st.spinner('Loading Data...Please Wait...'):
         symbol = st.sidebar.text_input('Stock Symbol', value = 'AAPL') #search box
 
@@ -210,11 +252,8 @@ def app():
             xPortfolio = st.sidebar.selectbox("Select Watchlist",
                                 ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
 
-            # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-
-            # if platform == "darwin":
             if is_prod:
-                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
             else:    
                 gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
@@ -388,7 +427,7 @@ def app():
                     except:
                         pass
                 with hdr3:
-                    display_summary_equity(symbol)            
+                    display_summary_equity(symbol)
             else:
                 #---------------  Header (ETFs) 2 Columns  -------------------
                 xExpenseRatio = ''

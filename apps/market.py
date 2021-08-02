@@ -201,6 +201,7 @@ def app():
 
                 if type(df1.at[i, "Market_Cap"]) != str:
                     num = human_format(df1.at[i, "Market_Cap"])     # Reformat 'Market Cap' Column
+                    df1['Market_Cap'] = df1['Market_Cap'].astype(str)   # Convert 'Market_Cap' Column to String
                     df1.at[i, "Market_Cap"] = num
 
 
@@ -243,9 +244,13 @@ def app():
                 df1['Avg_Vol_3M'] = df1['Avg_Vol_3M'].astype(str)   # Convert 'Avg Vol' Column to String
                 df1.at[i, "Avg_Vol_3M"] = num
 
-                num = human_format(df1.at[i, "Market_Cap"])         # Reformat 'Avg Vol' Column
-                df1['Market_Cap'] = df1['Market_Cap'].astype(str)   # Convert 'Avg Vol' Column to String
-                df1.at[i, "Market_Cap"] = num
+                if type(df1.at[i, "Market_Cap"]) != str:
+                    num = human_format(df1.at[i, "Market_Cap"])     # Reformat 'Market Cap' Column
+                    df1['Market_Cap'] = df1['Market_Cap'].astype(str)   # Convert 'Avg Vol' Column to String
+                    df1.at[i, "Market_Cap"] = num
+                # num = human_format(df1.at[i, "Market_Cap"])         # Reformat 'Avg Vol' Column
+                # df1['Market_Cap'] = df1['Market_Cap'].astype(str)   # Convert 'Avg Vol' Column to String
+                # df1.at[i, "Market_Cap"] = num
  
  
             fig =  ff.create_table(df1)

@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-# from sys import platform
 import os
 import pygsheets
 from pygsheets.datarange import DataRange
@@ -11,7 +10,7 @@ from apps.stock_scrape1 import getData_MarketWatch
 def app():
 
     is_prod = os.environ.get('IS_HEROKU', None)
-
+    
     st.sidebar.markdown('---')
 
     def display_header():
@@ -104,11 +103,9 @@ def app():
 
     # @st.cache(show_spinner=False)
     def load_gsheet(gsheet):
-            # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
-            # if platform == "darwin":
             if is_prod:
-                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env
             else:    
                 gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 

@@ -591,22 +591,18 @@ def getData_MarketWatch(ticker):
         xAfterMarketPerc = xAfterMarketPerc.get_text()
         xAfterMarketPerc = xAfterMarketPerc.replace("\n", " ")
         # print ("MarketWatch After Hours (%):   " + xAfterMarketPerc)
-        # xAfterMarketVolume = soup.find('div', class_='intraday__volume')
-        # print ("Test:       " + str(xAfterMarketVolume))
-        # xAfterMarketVolume = xAfterMarketVolume.get_text()
-        # xAfterMarketVolume = xAfterMarketVolume.replace("\n", " ")
-        # xAfterMarketVolume = xAfterMarketVolume.replace(" Volume:", ":")
-        # # print ("MarketWatch After Hours (Volume): " + xAfterMarketVolume)
         xAfterMarketVolume = soup.find('div', class_='range__header')
         xAfterMarketVolume = xAfterMarketVolume.find('span', class_='primary')
         xAfterMarketVolume = xAfterMarketVolume.get_text()
-        # xAfterMarketVolume = xAfterMarketVolume.replace("\n", " ")
         xAfterMarketVolume = xAfterMarketVolume.replace("Volume: ", "")
         # print ("MarketWatch After Hours (Volume): " + xAfterMarketVolume)
         xAfterMarketTime = soup.find('span', class_='timestamp__time')
         xAfterMarketTime = xAfterMarketTime.get_text()
         xAfterMarketTime = xAfterMarketTime.replace("Last Updated: ", "")
         # print ("MarketWatch After Hours (Time): " + xAfterMarketTime)    
+        xMarketStatus = soup.find('div', class_='status')
+        xMarketStatus = xMarketStatus.get_text()
+        # print ("MarketWatch Market Status: " + xAfterMarketStatus)    
 
         xList = []
         xList.append(xAfterMarket)
@@ -614,10 +610,11 @@ def getData_MarketWatch(ticker):
         xList.append(xAfterMarketPerc)
         xList.append(xAfterMarketVolume)
         xList.append(xAfterMarketTime)
+        xList.append(xMarketStatus)
         df4 = pd.DataFrame(xList)
         df4 = df4.transpose()
         df4.columns = df4.iloc[0]
-        df4.columns =['Price', 'Change', 'Change %', 'Volume', 'As of Time']
+        df4.columns =['Price', 'Change', 'ChangePerc', 'Volume', 'AsofTime', 'MarketStatus']
         print (tabulate(df4, headers='keys', tablefmt='psql', showindex=False))
 
 
