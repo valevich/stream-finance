@@ -249,7 +249,7 @@ def app():
         with st.spinner('Loading Data...Please Wait...'):
 
             xError = '0'
-            xPortfolio = st.sidebar.selectbox("Select Watchlist",
+            xPortfolio = st.sidebar.selectbox("Select Portfolio",
                                 ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
 
             if is_prod:
