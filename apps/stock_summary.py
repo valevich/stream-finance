@@ -161,35 +161,110 @@ def app():
     #------ Function to DISPLAY SUMMARY (ETF) ----------
     def display_summary_etf(xExpenseRatio):
 
+        xPrice = 0
+        xPrevClose = 0
+        xOpen = 0
+        xChange = 0
+        xChangePerc = 0
+        xFiftyTwoWeekRange = 0
+        xYield = '-'
+        xTrailingPE = '-'
+        # xExpenseRatio = ''
+        xTotalAssets = 0
+        xDayLowHigh = '-'
+
         try:
-
-            xPrice = "%0.2f" % (ticker.info['regularMarketPrice'])              # force display two decimals
-            xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
-            xOpen = "%0.2f" % (ticker.info['open'])                             # force display two decimals
-            xChange = "%0.2f" % (float(xPrice) - float(xPrevClose))
-            xChangePerc = "%0.2f" % ((float(xPrice) - float(xPrevClose)) / float(xPrevClose) * 100)
-            xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
-            xDayLowHigh = str("%0.2f" % ticker.info['dayLow']) + ' - ' + str("%0.2f" % ticker.info['dayHigh'])
-            xTotalAssets = human_format(ticker.info['totalAssets'])
-            # xYield = str(ticker.info['yield'] * 100) + '%'
-            xYield = str(human_format(ticker.info['yield'] * 100)) + '%'
-            if 'trailingPE' in ticker.info:
-                xTrailingPE = "%0.2f" % ticker.info['trailingPE']
-            else:
-                xTrailingPE = '-'
-
+            if 'regularMarketPrice' in ticker.info:
+                if ticker.info['regularMarketPrice']:
+                    xPrice = "%0.2f" % (ticker.info['regularMarketPrice'])              # force display two decimals
+                    print ('xPrice: ' + str(xPrice))
         except:
-            xPrice = 0
-            xPrevClose = 0
-            xOpen = 0
-            xChange = 0
-            xChangePerc = 0
-            xFiftyTwoWeekRange = 0
-            xYield = ''
-            xTrailingPE = 0
-            # xExpenseRatio = ''
-            xTotalAssets = 0
-            xDayLowHigh = ''
+            print ('Error in display_summary_etf: regularMarketPrice')
+            pass
+
+        try:
+            if 'previousClose' in ticker.info:
+                if ticker.info['previousClose']:
+                    xPrevClose = "%0.2f" % (ticker.info['previousClose'])               # force display two decimals
+                    print ('xPrevClose: ' + str(xPrevClose))
+        except:
+            print ('Error in display_summary_etf: previousClose')
+            pass
+
+        try:
+            if 'open' in ticker.info:
+                if ticker.info['open']:
+                    xOpen = "%0.2f" % (ticker.info['open'])                             # force display two decimals
+                    print ('xOpen: ' + str(xOpen))
+        except:
+            print ('Error in display_summary_etf: open')
+            pass
+
+        try:
+            if xPrevClose != 0:
+                xChange = "%0.2f" % (float(xPrice) - float(xPrevClose))
+                print ('xChange: ' + str(xChange))
+        except:
+            print ('Error in display_summary_etf: xChange')
+            pass
+
+        try:
+            if xPrevClose != 0:
+                xChangePerc = "%0.2f" % ((float(xPrice) - float(xPrevClose)) / float(xPrevClose) * 100)
+                print ('xPrice: ' + str(xChangePerc))
+        except:
+            print ('Error in display_summary_etf: xChangePerc')
+            print ('xPrice: ' + str(xPrice))
+            print ('xPrevClose: ' + str(xPrevClose))
+            pass
+
+        try:
+            if 'fiftyTwoWeekLow' in ticker.info and 'fiftyTwoWeekHigh' in ticker.info:
+                if ticker.info['fiftyTwoWeekLow'] and ticker.info and 'fiftyTwoWeekHigh':
+                    xFiftyTwoWeekRange = str("%0.2f" % ticker.info['fiftyTwoWeekLow']) + ' - ' + str("%0.2f" % ticker.info['fiftyTwoWeekHigh'])
+                    print ('xFiftyTwoWeekRange: ' + str(xFiftyTwoWeekRange))
+        except:
+            print ('Error in display_summary_etf: fiftyTwoWeekLow/fiftyTwoWeekHigh')
+            pass
+
+        try:
+            if 'dayLow' in ticker.info and 'dayHigh' in ticker.info:
+                if ticker.info['dayLow'] and ticker.info and 'dayHigh':
+                    xDayLowHigh = str("%0.2f" % ticker.info['dayLow']) + ' - ' + str("%0.2f" % ticker.info['dayHigh'])
+                    print ('xDayLowHigh: ' + str(xDayLowHigh))
+        except:
+            print ('Error in display_summary_etf: dayLow/dayHigh')
+            pass
+
+        try:
+            if 'totalAssets' in ticker.info:
+                if ticker.info['totalAssets']:
+                    xTotalAssets = human_format(ticker.info['totalAssets'])
+                    print ('xTotalAssets: ' + str(xTotalAssets))
+        except:
+            print ('Error in display_summary_etf: totalAssets')
+            pass
+
+        try:
+            if 'yield' in ticker.info:
+                if ticker.info['yield']:
+                    xYield = str(human_format(ticker.info['yield'] * 100)) + '%'
+                    print ('xYield: ' + str(xYield))
+        except:
+            print ('Error in display_summary_etf: yield')
+            pass
+
+        try:
+            if 'trailingPE' in ticker.info:
+                if ticker.info['trailingPE']:
+                    xTrailingPE = "%0.2f" % ticker.info['trailingPE']
+                    print ('xTrailingPE: ' + str(xTrailingPE))
+        except:
+            print ('Error in display_summary_etf: trailingPE')
+            pass
+
+        # except:
+        #     print ('Error in display_summary_etf')
 
         if float(xPrice) > float(xPrevClose):
             xColor = 'green'
@@ -793,13 +868,12 @@ def app():
                         if 'beta' in ticker.info:
                             if ticker.info['beta']:
                                 st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
-                        if ticker.info['volume']:
-                            num = human_format(ticker.info['volume'])
+                        if ticker.info['regularMarketVolume']:
+                            num = human_format(ticker.info['regularMarketVolume'])
                             st.write('Volume: ', num) 
-                            # st.write('Volume: ', "%0.2f" % ticker.info['volume'])
-                        if ticker.info['averageVolume']:
-                            num = human_format(ticker.info['averageVolume'])
-                            st.write('Average Volume: ', num) 
+                        # if ticker.info['averageVolume10days']:
+                        #     num = human_format(ticker.info['averageVolume10days'])
+                        #     st.write('Average Volume: ', num) 
                     with right: 
                         if 'fiftyDayAverage' in ticker.info:
                             if ticker.info['fiftyDayAverage']:
