@@ -5,7 +5,6 @@ import pygsheets
 from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
 from apps.stock_scrape1 import getData_MarketWatch
-import datetime
 
 
 def app():
@@ -90,7 +89,7 @@ def app():
                 st.markdown(row, unsafe_allow_html=True)
                 x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
                 xColor = 'black'
-                if '-' in df_mw2.iloc[1]['Change']:
+                if '-' in df_mw1.iloc[1]['Change']:
                     xColor = 'red'
                 else:
                     xColor = 'green'
@@ -260,11 +259,11 @@ def app():
         with st.spinner('Loading Data...Please Wait...'):
 
             df1 = load_gsheet(gsheet)
+            st.title(gsheet)
 
             xAccount = df1['Account'].unique().tolist()
             xAccount.insert(0,'All')
             xAccountChoice = st.sidebar.selectbox('Select Account:', xAccount)
-            st.title('Portfolio: ' + xAccountChoice)
             if xAccountChoice != 'All':
                 df1 = df1.loc[(df1['Account'] == xAccountChoice)]
 
@@ -316,9 +315,9 @@ def app():
 
             display_portfolio_totals(xTotalValue, xTotalTodayAvg, xTotalCost, xTotalGainLoss, xTotalGainLossPercAvg)
 
-            xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction')) 
+            xLayout = st.sidebar.radio("Select Layout", ('Summary','Detail')) 
 
-            if xOption == 'Summary':
+            if xLayout == 'Summary':
                 font_color = ['black'] * 6 + \
                     [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
                     ['black'], ['black'],
@@ -347,8 +346,7 @@ def app():
                 ])
                 fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=900,height=800)
                 st.write(fig)
-
-            elif xOption == 'Detail':
+            else:
                 font_color = ['black'] * 9 + \
                     [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
                     ['black'], ['black'],
@@ -381,59 +379,6 @@ def app():
                 ])
                 fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1450,height=800)
                 st.write(fig)
-
-            elif xOption == 'New Transaction':
-                #xxxxxxxxxxxxxxx
-                # user_input = st.text_input("label goes here", 'abc')
-                
-                #--------- INPUT EXAMPLE 1 ------------
-                # form = st.form(key='my-form')
-                # name = form.text_input('Enter your name')
-                # submit = form.form_submit_button('Submit')
-                # st.write('Press submit to have your name printed below')
-                # if submit:
-                #     st.write(f'hello {name}')
-
-                #--------- INPUT EXAMPLE 2 ------------
-                # st.title("An Input Form")
-                # field_1 = st.text_input('Your Name') 
-                # field_2 = st.text_area("Your address")
-                # start_date = datetime.date(1990, 7, 6)
-                # date = st.date_input('Your birthday', start_date)
-                # if date != start_date:
-                #     st.write (field_1)
-                #     st.write (field_2)
-                #     st.write (date)
-
-                #--------- INPUT EXAMPLE 3 ------------
-                # name = st.text_input('Your Name') 
-                # job = st.text_area("Your Job")
-                # age = st.number_input('Your Age', min_value=0, max_value=100, value=20, step=1)
-                # if name != "":
-                #     st.markdown (
-                #         f"""
-                #         * Name : {name}
-                #         * Age : {age}
-                #         * Job : {job}
-                #         """
-                #     )
-
-                # buffer, col1, col2 = st.beta_columns([.2,3,2])
-                # with col1:
-                #     name = st.text_input('Your Name') 
-                #     job = st.text_area("Your Job")
-                # with col2:
-                #     age = st.number_input('Your Age', min_value=0, max_value=100, value=20, step=1)
-                #     if name != "":
-                #         st.markdown (
-                #             f"""
-                #             * Name : {name}
-                #             * Age : {age}
-                #             * Job : {job}
-                #             """
-                #         )
-       
-                st.write ('Under Construction...coming soon!')
 
 
 
@@ -545,11 +490,6 @@ def app():
 
 
 
-    # # This is how you can get a Google Drive csv/excel share link to a Pandas DataFrame:
-    # url = 'https://drive.google.com/file/d/1iHZZ7-8ht9Arwt2fFEdCNGGrcoq0CJ81/view?usp=sharing'
-    # path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
-    # outlet_df = pd.read_csv(path)
-    # st.write(outlet_df)
 
 
     #---------- Append

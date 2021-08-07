@@ -770,31 +770,57 @@ def getData_MarketWatchETFs(ticker):
             x = i.get_text()
             x = x.replace("\n", " ")
             x = x[1:-2]
-            xList1.append(x)
-            if 'Net Expense Ratio' in x:
-                xExpenseRatio = x[18:]
-            if 'Beta' in x:
-                xBeta = x[5:]
-            if 'Turnover' in x:
-                xTurnover = x[11:]
-            if 'Ex-Dividend Date' in x:
-                xDividendDate = x[17:]
 
+            if 'Open' in x:
+                xOpen = x.replace("Open ", "")
+                xList1.append(xOpen)
+            if 'Day Range' in x:
+                xDayRange = x.replace("Day Range ", "")
+                xList1.append(xDayRange)
+            if '52 Week Range' in x:
+                x52WeekRange = x.replace("52 Week Range ", "")
+                xList1.append(x52WeekRange)
+            if 'Market Cap' in x:
+                xMarketCap = x.replace("Market Cap ", "")
+                xList1.append(xMarketCap)
+            if 'Shares Outstanding' in x:
+                xOutstanding = x.replace("Shares Outstanding ", "")
+                xList1.append(xOutstanding)
+            if 'Total Net Assets' in x:
+                xAssets = x.replace("Total Net Assets ", "")
+                xList1.append(xAssets)
+            if 'Beta' in x:
+                xBeta = x.replace("Beta ", "")
+                xList1.append(xBeta)
+            if 'Net Expense Ratio' in x:
+                xExpenseRatio = x.replace("Net Expense Ratio ", "")
+                xList1.append(xExpenseRatio)
+            if 'Turnover % ' in x:
+                xTurnover = x.replace("Turnover % ", "")
+                xList1.append(xTurnover)
+            if 'Yield' in x:
+                xYield = x.replace("Yield ", "")
+                xList1.append(xYield)
+            if 'Dividend' in x[:8]:
+                xDividend = x.replace("Dividend ", "")
+                xList1.append(xDividend)
+            if 'Ex-Dividend Date' in x:
+                xExDivDate = x.replace("Ex-Dividend Date ", "")
+                xList1.append(xExDivDate)
+            if 'Average Volume' in x:
+                xAvgVolume = x.replace("Average Volume ", "")
+                xList1.append(xAvgVolume)
+            
         x1 = soup.find('ul', class_='list list--lipper')
         x2 = x1.find_all('li', class_='list__item')
         for i in x2:
             x = i.get_text()
             x = x.replace("\n", " ")
-            # x = x[3:-1] + ': ' + x[1:2]
             x = x[1:2]
             xList2.append(x)
 
         print("xList1: " + str(xList1))
         print("xList2: " + str(xList2))
-        print ("Beta: " + xBeta)
-        print ("Expense Ratio: " + xExpenseRatio)
-        print ("Turnover %: " + xTurnover)
-        print ("Ex-Dividend Date: " + xDividendDate)
 
 
     except:
@@ -802,7 +828,7 @@ def getData_MarketWatchETFs(ticker):
         pass
 
 
-    return xBeta, xExpenseRatio, xTurnover, xDividendDate, xList2
+    return xList1, xList2
 
 
 

@@ -90,7 +90,7 @@ def app():
                 st.markdown(row, unsafe_allow_html=True)
                 x1 = df_mw2.iloc[1]['Change'] + " (" + df_mw2.iloc[1]['Change %'] + " )"
                 xColor = 'black'
-                if '-' in df_mw1.iloc[1]['Change']:
+                if '-' in df_mw2.iloc[1]['Change']:
                     xColor = 'red'
                 else:
                     xColor = 'green'
