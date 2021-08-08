@@ -261,60 +261,71 @@ def app():
 
             df1 = load_gsheet(gsheet)
 
+            #------------   CALCULATE EACH ACCOUNT TOTALS  --------------
             xAccount = df1['Account'].unique().tolist()
             xAccount.insert(0,'All')
             xAccountChoice = st.sidebar.selectbox('Select Account:', xAccount)
             st.title('Portfolio: ' + xAccountChoice)
+            st.write ('\n')
+
             if xAccountChoice != 'All':
                 df1 = df1.loc[(df1['Account'] == xAccountChoice)]
 
-            #------------   CALCULATE PORTFOLIO TOTALS  --------------
-            xTotalValue = 0.00
-            xTotalTodayPerc = 0.00
-            xTotalTodayAvg = 0.00
-            xTotalCost = 0.00
-            xTotalGainLoss = 0.00
-            xTotalGainLossPerc = 0.00
+            xTotalValue, xTotalTodayPerc, xTotalTodayAvg, xTotalToday, xTotalGainLoss, xTotalGainLossPerc = [0] * 6
+            xGrandTotalValue, xGrandTotalTodayPerc, xGrandTotalTodayAvg, xGrandTotalToday, xGrandTotalGainLoss, xGrandTotalGainLossPerc = [0] * 6
 
-            for i in range(0, len(df1)):
-                #------------   xTotalValue  --------------
-                xTemp = ''                                     
-                xTemp = xTemp + df1.iloc[i]['TotalValue']
-                xTemp = xTemp.replace('$', '') 
-                xTemp = xTemp.replace(',', '') 
-                xTotalValue = xTotalValue + float(xTemp)
-                #------------   xTotalTodayPerc  --------------
-                if df1.iloc[i]['TodayPerc']:
-                    xTemp = ''
-                    xTemp = xTemp + df1.iloc[i]['TodayPerc']
-                    xTemp = xTemp.replace('%', '') 
-                    xTemp = xTemp.replace(',', '') 
-                    xTotalTodayPerc = xTotalTodayPerc + float(xTemp)
-                #------------   xTotalCost  --------------
-                xTemp = ''                                     
-                xTemp = xTemp + df1.iloc[i]['TotalCost']
-                xTemp = xTemp.replace('$', '') 
-                xTemp = xTemp.replace(',', '') 
-                xTotalCost = xTotalCost + float(xTemp)
-                #------------   xTotalGainLoss  --------------
-                if df1.iloc[i]['GainLoss']:
-                    xTemp = ''                                     
-                    xTemp = xTemp + df1.iloc[i]['GainLoss']
-                    xTemp = xTemp.replace('$', '') 
-                    xTemp = xTemp.replace(',', '') 
-                    xTotalGainLoss = xTotalGainLoss + float(xTemp)
-                #------------   xTotalGainLossPerc  --------------
-                if df1.iloc[i]['GainLossPerc']:
-                    xTemp = ''
-                    xTemp = xTemp + df1.iloc[i]['GainLossPerc']
-                    xTemp = xTemp.replace('%', '') 
-                    xTemp = xTemp.replace(',', '') 
-                    xTotalGainLossPerc = xTotalGainLossPerc + float(xTemp)
+            df2 = df1.copy()
+            df2['TotalValue'] = df2['TotalValue'].str.replace('$','')
+            df2['TotalValue'] = df2['TotalValue'].str.replace(',','')
+            df2['GainLoss'] = df2['GainLoss'].str.replace('$','')
+            df2['GainLoss'] = df2['GainLoss'].str.replace(',','')
+            df2['GainLoss'] = pd.to_numeric(df2['GainLoss'], errors='coerce').astype('float')
+            df2['TodayPerc'] = df2['TodayPerc'].str.replace('%','')
+            df2['TodayPerc'] = df2['TodayPerc'].str.replace(',','')
+            df2['TodayPerc'] = pd.to_numeric(df2['TodayPerc'], errors='coerce').astype('float')
+            df2['GainLossPerc'] = df2['GainLossPerc'].str.replace('%','')
+            df2['GainLossPerc'] = df2['GainLossPerc'].str.replace(',','')
+            df2['GainLossPerc'] = pd.to_numeric(df2['GainLossPerc'], errors='coerce').astype('float')
+            df2['TotalValue'] = df2.TotalValue.astype(float)
+            df2['TodayPerc'] = df2.TodayPerc.astype(float)
+            df2['GainLoss'] = df2.GainLoss.astype(float)
+            df2['GainLossPerc'] = df2.GainLossPerc.astype(float)
+            df2 = df2.groupby(['Account']).agg({'TotalValue': "sum", 'TodayPerc': 'mean', 'GainLoss': 'sum', 'GainLossPerc': 'mean'})
 
-            xTotalTodayAvg = str(round(xTotalTodayPerc / float(len(df1)), 2)) + '%'
-            xTotalGainLossPercAvg = str(round(xTotalGainLossPerc / float(len(df1)), 2)) + '%'
+            xCntr = 0
+            for i in range(0, len(df2)):
+                df2['Account'] = df2.index
+                xAccount = df2.iloc[i]['Account']
+                xTotalValue = df2.iloc[i]['TotalValue']
+                xTotalTodayPerc = df2.iloc[i]['TodayPerc']
+                xTotalToday = (xTotalValue * xTotalTodayPerc / 100)
+                xTotalGainLoss = df2.iloc[i]['GainLoss']
+                xTotalGainLossPerc = df2.iloc[i]['GainLossPerc']
+                xGrandTotalValue = xGrandTotalValue + xTotalValue
+                xGrandTotalTodayPerc = xGrandTotalTodayPerc + xTotalTodayPerc
+                xGrandTotalToday = xGrandTotalToday + xTotalToday
+                xGrandTotalGainLoss = xGrandTotalGainLoss + xTotalGainLoss
+                xGrandTotalGainLossPerc = xGrandTotalGainLossPerc + xTotalGainLossPerc
+                xCntr = xCntr + 1
+                display_portfolio_totals(xCntr, xAccount, xTotalValue, xTotalTodayPerc, xTotalToday, xTotalGainLoss, xTotalGainLossPerc)
 
-            display_portfolio_totals(xTotalValue, xTotalTodayAvg, xTotalCost, xTotalGainLoss, xTotalGainLossPercAvg)
+            # st.write ('---')
+            st.write ('\n')
+
+            if xAccountChoice == 'All':
+                row = '<hr style="height:1px;width:95%;border-width:0;color:gray;background-color:gray;margin-top: 0.1em;margin-bottom: 0.1em;">'
+                st.markdown(row, unsafe_allow_html=True)
+                xGrandTotalTodayPerc = xGrandTotalTodayPerc / len(df2)
+                xGrandTotalGainLossPerc = xGrandTotalGainLossPerc / len(df2)
+                display_portfolio_totals(xCntr, 'Total' ,xGrandTotalValue, xGrandTotalTodayPerc, xGrandTotalToday, xGrandTotalGainLoss, xGrandTotalGainLossPerc)
+
+
+            # row = '<hr style="height:2px;border-width:0;color:gray;background-color:gray;margin-top: 1.0em;margin-bottom: 0.1em;">'
+            # st.markdown(row, unsafe_allow_html=True)
+            st.write ('\n')
+            st.write ('\n')
+            st.write ('\n')
+
 
             xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction')) 
 
@@ -437,82 +448,82 @@ def app():
 
 
 
-    def display_portfolio_totals(xTotalValue, xTotalTodayAvg, xTotalCost, xTotalGainLoss, xTotalGainLossPercAvg):
 
-        st.write ('\n')
-        buf1, buf2, col1, col2, col3, col4, col5 = st.beta_columns([0.1,0.1,1,1,1,1,1])
-        #---------------  Todays Change $  -------------------
+    def display_portfolio_totals(xCntr, xAccount, xTotalValue, xTotalTodayPerc, xTotalToday, xTotalGainLoss, xTotalGainLossPerc):
+
+        col0, buf, col1, col2, col3, col4, col5 = st.beta_columns([0.7,0.1,1,1,1,1,1])
+        #---------------  Account Name  -------------------
+        with col0:
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Account</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            xColor = 'blue'
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{xAccount}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+
+        #---------------  Total Value  -------------------
         with col1:
-            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Today ($)</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
-            xColor = 'black'
-            x1 = xTotalTodayAvg.replace('-', '')
-            x1 = x1.replace('%', '')
-            x1 = round(float(x1),2)
-            x2 = round(float(xTotalValue),2)
-            # x3 = round((x2 * float(x1) / 100),2)
-            x3 = (x2 * float(x1) / 100)
-            x3 = str('$' + "{:,.2f}".format(x3))
-            if '-' in xTotalTodayAvg:
-                xColor = 'red'
-                x3 = '-' + str(x3)
-            else:
-                xColor = 'green'
-                x3 = str(x3)
-            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{x3}</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
-        #---------------  Todays Change %  -------------------
-        with col2:
-            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Today (%)</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
-            xColor = 'black'
-            if '-' in xTotalTodayAvg:
-                xColor = 'red'
-            else:
-                xColor = 'green'
-            xTotalTodayAvg = str(xTotalTodayAvg)
-            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{xTotalTodayAvg}</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
-        #---------------  Tootal Value  -------------------
-        with col3:
-            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Total Value</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Total Value</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
             xColor = 'black'
             xVal = str("{:,.2f}".format(xTotalValue))
             row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>${xVal}</b></p>'
             st.markdown(row, unsafe_allow_html=True)
+
+        #---------------  Todays Change $  -------------------
+        with col2:
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Today ($)</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            xColor = 'black'
+            if xTotalToday < 0:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            xTotalToday = str("{:,.2f}".format(xTotalToday))
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>${xTotalToday}</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+
+        #---------------  Todays Change %  -------------------
+        with col3:
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Today (%)</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
+            xColor = 'black'
+            if xTotalTodayPerc < 0:
+                xColor = 'red'
+            else:
+                xColor = 'green'
+            x1 = str("{:,.2f}".format(xTotalTodayPerc))
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{x1}%</b></p>'
+            st.markdown(row, unsafe_allow_html=True)
+
         with col4:
-            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gain/Loss ($)</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gain/Loss ($)</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
             xColor = 'black'
-            xGainLoss = str('$' + "{:,.2f}".format(xTotalGainLoss))
-            # xGainLoss = str(round(float(xTotalGainLoss),2))
-            if '-' in str(xTotalGainLoss):
+            if xTotalGainLoss < 0:
                 xColor = 'red'
             else:
                 xColor = 'green'
-            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{xGainLoss}</b></p>'
+            x1 = str("{:,.2f}".format(xTotalGainLoss))
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>${x1}</b></p>'
             st.markdown(row, unsafe_allow_html=True)
+
         with col5:
-            row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gain/Loss (%)</b></p>'
-            st.markdown(row, unsafe_allow_html=True)
+            if xCntr < 2:
+                row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Gain/Loss (%)</b></p>'
+                st.markdown(row, unsafe_allow_html=True)
             xColor = 'black'
-            xGainLossPerc = str(xTotalGainLossPercAvg)
-            if '-' in xTotalGainLossPercAvg:
+            if xTotalGainLossPerc < 0:
                 xColor = 'red'
             else:
                 xColor = 'green'
-            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{xGainLossPerc}</b></p>'
+            x1 = str("{:,.2f}".format(xTotalGainLossPerc))
+            row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 16px;"><b>{x1}%</b></p>'
             st.markdown(row, unsafe_allow_html=True)
-
-        st.write ('\n')
-        st.write ('\n')
-        # st.markdown("---")
-
-
-
-
-
 
 
 

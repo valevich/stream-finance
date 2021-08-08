@@ -113,7 +113,6 @@ def app():
                     xAfterMarketPrice = xAfterMarketPrice.replace("$", "")
                     xAfterMarketPrice = xAfterMarketPrice.replace(",", "")
                     xAfterMarketPrice = xAfterMarketPrice.strip()
-                    # if float(xAfterMarketPrice) >= float(xPrice):
                     if '-' in xAfterMarketChange:
                         xAftHrsColor = 'red'
                     else : 
@@ -161,6 +160,11 @@ def app():
     #------ Function to DISPLAY SUMMARY (ETF) ----------
     def display_summary_etf(xList1):
 
+        # Initilize to blanks
+        xOpen, xDayRange, x52WeekRange, xMarketCap, xOutstanding, xAssets, xBeta, \
+                xExpenseRatio, xTurnover, xYield, xDividend, xExDivDate, xAvgVolume = [""] * 13
+
+        xTurnover = ''
         xOpen, xDayRange, x52WeekRange, xMarketCap, xOutstanding, xAssets, xBeta, \
                 xExpenseRatio, xTurnover, xYield, xDividend, xExDivDate, xAvgVolume = xList1
 
@@ -816,8 +820,6 @@ def app():
                         if 'trailingPE' in ticker.info:
                             if ticker.info['trailingPE']:
                                 st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
-                        st.write('Turnover: ', xTurnover)
-                        st.write('Beta: ', xBeta)
                         if 'beta' in ticker.info:
                             if ticker.info['beta']:
                                 st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
@@ -827,6 +829,12 @@ def app():
                         # if ticker.info['averageVolume10days']:
                         #     num = human_format(ticker.info['averageVolume10days'])
                         #     st.write('Average Volume: ', num) 
+                        if 'trailingAnnualDividendRate' in ticker.info:
+                            if ticker.info['trailingAnnualDividendRate']:
+                                st.write('Trailing Annual Dividend Rate: ',   "%0.2f" % ticker.info['trailingAnnualDividendRate'])
+                        if 'trailingAnnualDividendYield' in ticker.info:
+                            if ticker.info['trailingAnnualDividendYield']:
+                                st.write('Trailing Annual Dividend Yield: ', "%0.2f" % ticker.info['trailingAnnualDividendYield'])
                     with right: 
                         if 'fiftyDayAverage' in ticker.info:
                             if ticker.info['fiftyDayAverage']:
@@ -840,12 +848,6 @@ def app():
                         if 'fiveYearAverageReturn' in ticker.info:
                             if ticker.info['fiveYearAverageReturn']:
                                 st.write('5-Year Average Return: ',   "%0.2f" % ticker.info['fiveYearAverageReturn'])
-                        if 'trailingAnnualDividendRate' in ticker.info:
-                            if ticker.info['trailingAnnualDividendRate']:
-                                st.write('Trailing Annual Dividend Rate: ',   "%0.2f" % ticker.info['trailingAnnualDividendRate'])
-                        if 'trailingAnnualDividendYield' in ticker.info:
-                            if ticker.info['trailingAnnualDividendYield']:
-                                st.write('Trailing Annual Dividend Yield: ', "%0.2f" % ticker.info['trailingAnnualDividendYield'])
 
 
         st.write ('\n\n\n')
