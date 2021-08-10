@@ -24,7 +24,7 @@ from apps.stock_scrape1 import getData_Tipranks
 from apps.stock_scrape1 import getData_StockInvest
 from apps.stock_scrape1 import getData_MarketWatch
 from apps.stock_scrape1 import getData_MarketWatchETFs
-from apps.stock_scrape1 import getData_DividendInvestor
+from apps.stock_scrape1 import getData_MarketWatchDividends
 
 
 def app():
@@ -314,7 +314,7 @@ def app():
                         price = ticker.info['currentPrice']
                         if ticker.info['dividendRate']:
                             if ticker.info['dividendRate'] > 0:
-                                xDivExDate, xDivPayDate, xDivFreq = getData_DividendInvestor(symbol)  # GET DIV PAY DATE, ETC
+                                xDivExDate, xDivPayDate, xDivFreq = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
                             xDividendRate = ticker.info['dividendRate']
                             xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
                             xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
@@ -745,7 +745,14 @@ def app():
             if symbol and 'symbol' in ticker.info:
 
                 st.header(f'{symbol.upper()} Fundamentals')
-                
+
+                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
+                if ticker.info['dividendRate']:
+                    if ticker.info['dividendRate'] > 0:
+                        xDivList = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
+                        xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+
+
                 #---------------  Fundamentals (Equity) 2 Columns  -------------------
                 if ticker.info['quoteType'] == 'EQUITY':
 
@@ -760,40 +767,50 @@ def app():
                         if 'trailingPE' in ticker.info:
                             if ticker.info['trailingPE']:
                                 st.write('Trailing P/E: ', "%0.2f" % ticker.info['trailingPE'])
-                        if 'trailingEps' in ticker.info:
-                            if ticker.info['trailingEps']:
-                                st.write('Trailing EPS:   ', "%0.2f" % ticker.info['trailingEps'])
+                        if 'forwardPE' in ticker.info:
+                            if ticker.info['forwardPE']:
+                                st.write('Forward P/E: ',   "%0.2f" % ticker.info['forwardPE'])
                         if 'bookValue' in ticker.info:
                             if ticker.info['bookValue']:
                                 st.write('Book Value:   ', "%0.2f" % ticker.info['bookValue'])
                         if 'beta' in ticker.info:
                             if ticker.info['beta']:
                                 st.write('Beta:   ', "%0.2f" % ticker.info['beta'])
-                        if 'fiftyDayAverage' in ticker.info:
-                            if ticker.info['fiftyDayAverage']:
-                                st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
+                        if 'priceToBook' in ticker.info:
+                            if ticker.info['priceToBook']:
+                                st.write('Price to Book: ', "%0.2f" % ticker.info['priceToBook'])
+                        if xDivAmount:
+                                st.write('Dividend Amount:   ', xDivAmount)
+                        if xDivYield:
+                                st.write('Dividend Yield:   ', xDivYield)
                         if 'payoutRatio' in ticker.info:
-                            if ticker.info['payoutRatio']:
-                                st.write('Payout Ratio:   ', "%0.2f" % ticker.info['payoutRatio'])
+                                if ticker.info['payoutRatio']:
+                                    st.write('Payout Ratio:   ', "%0.2f" % ticker.info['payoutRatio'])
                     with right: 
                         if 'priceToSalesTrailing12Months' in ticker.info:
                             if ticker.info['priceToSalesTrailing12Months']:
                                 st.write('Price to Sales: ',"%0.2f" % ticker.info['priceToSalesTrailing12Months'])
-                        if 'forwardPE' in ticker.info:
-                            if ticker.info['forwardPE']:
-                                st.write('Forward P/E: ',   "%0.2f" % ticker.info['forwardPE'])
+                        if 'trailingEps' in ticker.info:
+                            if ticker.info['trailingEps']:
+                                st.write('Trailing EPS:   ', "%0.2f" % ticker.info['trailingEps'])
                         if 'forwardEps' in ticker.info:
                             if ticker.info['forwardEps']:
                                 st.write('Forward EPS: ',   "%0.2f" % ticker.info['forwardEps'])
-                        if 'priceToBook' in ticker.info:
-                            if ticker.info['priceToBook']:
-                                st.write('Price to Book: ', "%0.2f" % ticker.info['priceToBook'])
-                        if 'pegRatio' in ticker.info:
-                            if ticker.info['pegRatio']:
-                                st.write('Peg Ratio: ', "%0.2f" % ticker.info['pegRatio'])
+                        if 'fiftyDayAverage' in ticker.info:
+                            if ticker.info['fiftyDayAverage']:
+                                st.write('50 Day Average: ', "%0.2f" % ticker.info['fiftyDayAverage'])
                         if 'twoHundredDayAverage' in ticker.info:
                             if ticker.info['twoHundredDayAverage']:
                                 st.write('200 Day Average: ', "%0.2f" % ticker.info['twoHundredDayAverage'])
+                        if 'pegRatio' in ticker.info:
+                            if ticker.info['pegRatio']:
+                                st.write('Peg Ratio: ', "%0.2f" % ticker.info['pegRatio'])
+                        if xDivExDate:
+                                st.write('Dividend Ex-Date:   ', xDivExDate)
+                        if xDivPayDate:
+                                st.write('Dividend Pay Date:   ', xDivPayDate)
+                        if xDivFreq:
+                                st.write('Dividend Frequency:   ', xDivFreq)
                     try: 
                         if choice == 'Yearly':
                             y_earning_df = ticker.earnings.reset_index()
@@ -850,7 +867,8 @@ def app():
                                 st.write('5-Year Average Return: ',   "%0.2f" % ticker.info['fiveYearAverageReturn'])
 
 
-        st.write ('\n\n\n')
+        st.write ('\n')
+        st.write ('\n')
 
 
 

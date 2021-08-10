@@ -833,12 +833,10 @@ def getData_MarketWatchETFs(ticker):
 
 
 #================================================================================
-#                         DIVIDENDINVESTOR.COM                                  #
+#                         MarketWatch Dividends                                 #
 #================================================================================
-def getData_DividendInvestor(ticker):
+def getData_MarketWatchDividends(ticker):
 
-    url = f'https://www.dividendinvestor.com/dividend-quote/{ticker}/'
-    
     headers = { 
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36', 
         'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 
@@ -848,29 +846,53 @@ def getData_DividendInvestor(ticker):
         'Connection' : 'close'
     }
 
-
     try:
 
+        url = f'https://www.marketbeat.com/stocks/NYSEARCA/{ticker}'
+        page = requests.get(url, headers=headers) 
+        soup = BeautifulSoup(page.text, 'lxml')
+        exchange = soup.find('div', class_='h3 m-0 pt-3 d-inline-block')
+        exchange = exchange.get_text()
+        exchange = exchange[:exchange.find(":")]
+
+        url = f'https://www.marketbeat.com/stocks/{exchange}/{ticker}/dividend/'
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
 
         xList1 = []
-        x1 = soup.find('div', id='dividend-right')
-        x2 = x1.find_all('span', class_='data')
-        for i in x2:
-            x = i.get_text()
-            xList1.append(x)
+        x1 = soup.find('div', class_='tab-pane active')
+        x2 = x1.find_all('tr', class_='even')
+        for child in x2[0].children:
+            xList1.append(child.get_text())
 
-        print("xList1: " + str(xList1))
-        print("Dividend Ex Date: " + str(xList1[4]))
-        print("Dividend Pay Date: " + str(xList1[6]))
-        print("Dividend Frequency: " + str(xList1[9]))
+        xDivFreq = '0'
+        xFreq = xList1[1]
+        if 'uarterly' in xFreq:
+            xDivFreq = '4'
+        elif 'onthly' in xFreq:
+            xDivFreq = '12'
+        elif 'semi-annual' in xFreq:
+            xDivFreq = '2'
+        elif 'nnual' in xFreq:
+            xDivFreq = '1'
+
+        xDivExDate = xList1[4]
+        xDivPayDate = xList1[6]
+        xDivAmount = xList1[2]
+        xDivYield = xList1[3]
+
+        xList2 = [xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield]
+        # print("xList1: " + str(xList1))
+        # print("Dividend Ex Date: " + xDivExDate)
+        # print("Dividend Pay Date: " + xDivPayDate)
+        # print("Dividend Frequency: " + xDivFreq)
 
     except:
-        print ("Not Found Exception! - MarketWatchETFs")
+        print ("Not Found Exception! - MarketWatchDividends")
         pass
 
-    return str(xList1[4]), str(xList1[6]), str(xList1[9])
+    # return xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield
+    return xList2
 
 
 
