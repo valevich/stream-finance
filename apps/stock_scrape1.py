@@ -856,6 +856,7 @@ def getData_MarketWatchDividends(ticker):
         exchange = exchange[:exchange.find(":")]
 
         url = f'https://www.marketbeat.com/stocks/{exchange}/{ticker}/dividend/'
+        print("marketbeat url: " + url)
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
 
@@ -888,8 +889,11 @@ def getData_MarketWatchDividends(ticker):
         xDivAmount = xList1[2]
         xDivYield = xList1[3]
 
+        xDivAmount = xList1[2].replace("$","")
+        xDivAmount = str("%0.2f" % (float(xDivAmount)))
+
         xList2 = [xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield]
-        # print("xList1: " + str(xList1))
+        print("xList2: " + str(xList2))
         # print("Dividend Ex Date: " + xDivExDate)
         # print("Dividend Pay Date: " + xDivPayDate)
         # print("Dividend Frequency: " + xDivFreq)
