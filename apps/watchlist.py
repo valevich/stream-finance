@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from apps.stock_scrape1 import getData_MarketWatch
 import datetime
 
-
 def app():
 
     is_prod = os.environ.get('IS_HEROKU', None)
@@ -544,8 +543,12 @@ def app():
     elif xSelection == 'Analysts': 
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 
-        display_portfolio (xSelection)
-
+        pwd = st.sidebar.empty()
+        t = pwd.text_input("Enter Password")
+        if t != "":
+            if t == 'nella1':
+                pwd.empty()
+                display_portfolio (xSelection)
 
 
 
@@ -610,12 +613,6 @@ def app():
 
 
 
-
-
-
-
-
-
     # cells = wks.find("NaN", searchByRegex=False, matchCase=False, 
     #     matchEntireCell=False, includeFormulas=False, 
     #     cols=(3,6), rows=None, forceFetch=True)
@@ -640,9 +637,6 @@ def app():
 
     # with news2: 
     #     st.markdown("***")
-
-
-
 
 
 

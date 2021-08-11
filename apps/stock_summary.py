@@ -312,12 +312,15 @@ def app():
                     xDivExDate, xDivPayDate, xDivFreq = '', '', ''
                     if ticker.info['quoteType'] == 'EQUITY':
                         price = ticker.info['currentPrice']
+                        xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
                         if ticker.info['dividendRate']:
                             if ticker.info['dividendRate'] > 0:
-                                xDivExDate, xDivPayDate, xDivFreq = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
-                            xDividendRate = ticker.info['dividendRate']
-                            xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
-                            xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                                xDivList = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
+                                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                                # xDividendRate = ticker.info['dividendRate']
+                                # xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                                # xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                                xDividend = xDivAmount + ' (' + xDivYield + '%)'
                         else:
                             xDividend = '-'
                     else:

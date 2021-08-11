@@ -860,6 +860,13 @@ def getData_MarketWatchDividends(ticker):
         soup = BeautifulSoup(page.text, 'lxml')
 
         xList1 = []
+        xList2 = []
+        xDivFreq = ''
+        xDivExDate = ''
+        xDivPayDate = ''
+        xDivAmount = ''
+        xDivYield = ''
+
         x1 = soup.find('div', class_='tab-pane active')
         x2 = x1.find_all('tr', class_='even')
         for child in x2[0].children:
@@ -889,9 +896,9 @@ def getData_MarketWatchDividends(ticker):
 
     except:
         print ("Not Found Exception! - MarketWatchDividends")
+        xList2 = [xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield]
         pass
 
-    # return xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield
     return xList2
 
 
