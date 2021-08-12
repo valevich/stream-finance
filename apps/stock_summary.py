@@ -320,7 +320,7 @@ def app():
                                 # xDividendRate = ticker.info['dividendRate']
                                 # xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
                                 # xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
-                                xDividend = xDivAmount + ' (' + xDivYield + '%)'
+                                xDividend = xDivAmount + ' (' + xDivYield + ')'
                         else:
                             xDividend = '-'
                     else:
