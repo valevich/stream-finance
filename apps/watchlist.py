@@ -623,7 +623,7 @@ def app():
             sheet = gc.open('Research')
 
             if xAction == 'Sell':
-                #------- Add Sale Transaction ----------
+                #------- Add Sale Transaction to Transactions Sheet ----------
                 wks = sheet.worksheet_by_title('Transactions')
                 values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
                 wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
@@ -641,10 +641,23 @@ def app():
                             wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
 
             if xAction == 'Buy':
-                #------- Add Buy Transaction ----------
+                #------- Add Sale Record to Transactions Sheet ----------
+                wks = sheet.worksheet_by_title('Transactions')
+                values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+                #------- Add Buy Record to Portfolio Sheet ----------
                 wks = sheet.worksheet_by_title('Portfolio')
                 values = [[xAccountChoice, xTickerChoice, None, str(xTransDate), xShares, xTransPrice, None, None, None, None, None, None, None, None, xDivAmount, None, None, None, xDivExDate, xDivPayDate, xDivFreq]]
                 wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+                #------- Update Portfolio CASH Balance ----------
+                for idx, row in enumerate(wks):
+                    if (wks[idx+1][0]) == xAccountChoice:
+                        xAmt = float(xTransPrice) * float(xShares)
+                        if (wks[idx+1][1]) == 'CASH':
+                            xTot = wks[idx+1][10]
+                            xTot = xTot.replace('$','')
+                            xTot = float(xTot.replace(',',''))
+                            wks.cell('K'+str(idx+1)).value = str(xTot - xAmt)
 
 
             st.write('Transaction Processed!')
