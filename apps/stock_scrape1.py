@@ -846,6 +846,14 @@ def getData_MarketWatchDividends(ticker):
         'Connection' : 'close'
     }
 
+    xList1 = []
+    xList2 = []
+    xDivFreq = ''
+    xDivExDate = ''
+    xDivPayDate = ''
+    xDivAmount = ''
+    xDivYield = ''
+
     try:
 
         url = f'https://www.marketbeat.com/stocks/NYSEARCA/{ticker}'
@@ -859,14 +867,6 @@ def getData_MarketWatchDividends(ticker):
         print("marketbeat url: " + url)
         page = requests.get(url, headers=headers) 
         soup = BeautifulSoup(page.text, 'lxml')
-
-        xList1 = []
-        xList2 = []
-        xDivFreq = ''
-        xDivExDate = ''
-        xDivPayDate = ''
-        xDivAmount = ''
-        xDivYield = ''
 
         x1 = soup.find('div', class_='tab-pane active')
         x2 = x1.find_all('tr', class_='even')

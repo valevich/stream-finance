@@ -5,7 +5,10 @@ import pygsheets
 from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
 from apps.stock_scrape1 import getData_MarketWatch
+from apps.stock_scrape1 import getData_MarketWatchDividends
 import datetime
+import yfinance as yf 
+
 
 def app():
 
@@ -107,7 +110,7 @@ def app():
             if is_prod:
                 gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env
             else:    
-                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+                gc = pygsheets.authorize(service_file='client_secret.json') # using local account credentials
 
             sheet = gc.open('Research')
             wks = sheet.worksheet_by_title(gsheet)
@@ -115,7 +118,6 @@ def app():
 
             xLists = ['Watchlist','Dividends','ETFs','ToBuy']
             if gsheet in xLists:
-
 
             # if gsheet != 'AnalystsRankings' and != 'Portfolio':
                 df.drop(
@@ -136,17 +138,6 @@ def app():
 
             st.title(gsheet)
             df1 = load_gsheet(gsheet)
-
-            # st.write(df1.columns)
-            # buyDate = df1['Buy_Date'].unique()
-            # buyDate_SELECTED = st.sidebar.multiselect('Select countries', buyDate)
-            # mask_buyDate = df1['Buy_Date'].isin(buyDate_SELECTED)
-            # df1 = df1[mask_buyDate]
-
-            # st.write(df1.columns)
-            # cols = st.sidebar.multiselect('select columns:', df1.columns)
-            # st.write('You selected:', cols)
-            # st.write(df1[cols])
 
             font_color = ['black'] * 6 + \
                 [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
@@ -415,35 +406,128 @@ def app():
                 #     st.write (field_2)
                 #     st.write (date)
 
-                #--------- INPUT EXAMPLE 3 ------------
-                # name = st.text_input('Your Name') 
-                # job = st.text_area("Your Job")
-                # age = st.number_input('Your Age', min_value=0, max_value=100, value=20, step=1)
-                # if name != "":
-                #     st.markdown (
-                #         f"""
-                #         * Name : {name}
-                #         * Age : {age}
-                #         * Job : {job}
-                #         """
-                #     )
+    
+                #-------------- New Transaction Row 1 ----------------
+                col1, col2, col3, col4, col5 = st.beta_columns([1.5,1.5,1.5,1,4])
+                with col1:
+                    xAction = st.selectbox(
+                        'Select Buy/Sell',
+                        ('Buy', 'Sell', 'Dividend'))
+                with col2:
+                    if xAction == 'Sell' or xAction == 'Buy':
+                        xAccount = df1['Account'].unique().tolist()
+                        xAccount.insert(0,'')
+                        xAccountChoice = st.selectbox('Select Account:', xAccount)
+                with col3:
+                    if xAction == 'Sell':
+                        if xAccountChoice != '':
+                            df_tick = df1[df1['Ticker']!='CASH']
+                            df_tick = df_tick.loc[(df_tick['Account'] == xAccountChoice)]
+                            xTicker = df_tick['Ticker'].unique().tolist()
+                            xTicker.insert(0,'')
+                            xTickerChoice = st.selectbox('Select Ticker:', xTicker)
+                    elif xAction == 'Buy':
+                        if xAccountChoice != '':
+                            xTickerChoice = st.text_input('Ticker:').upper()
 
-                # buffer, col1, col2 = st.beta_columns([.2,3,2])
-                # with col1:
-                #     name = st.text_input('Your Name') 
-                #     job = st.text_area("Your Job")
-                # with col2:
-                #     age = st.number_input('Your Age', min_value=0, max_value=100, value=20, step=1)
-                #     if name != "":
-                #         st.markdown (
-                #             f"""
-                #             * Name : {name}
-                #             * Age : {age}
-                #             * Job : {job}
-                #             """
-                #         )
-       
-                st.write ('Under Construction...coming soon!')
+                with col5:
+                    if xAction == 'Sell':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                st.write ('\n')
+                                x1 = (df_tick[df_tick.Ticker == xTickerChoice].Company.item())
+                                x2 = (df_tick[df_tick.Ticker == xTickerChoice].Today.item())
+                                row = f'<p style="font-family:fantasy; margin-top: 0; margin-bottom: 0; color:Blue; font-size: 22px;"><b>{x1}</b></p>'
+                                st.markdown(row, unsafe_allow_html=True)
+                                row = f'<p style="font-family:verdana; margin-top: 0; margin-bottom: 0; color:Blue; font-size: 14px;">Current Price: {x2}</p>'
+                                st.markdown(row, unsafe_allow_html=True)
+                    elif xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                st.write ('\n')
+                                ticker = yf.Ticker(xTickerChoice)
+                                x1 = ticker.info['longName']
+                                x2 = ticker.info['regularMarketPrice']
+                                row = f'<p style="font-family:fantasy; margin-top: 0; margin-bottom: 0; color:Blue; font-size: 22px;"><b>{x1}</b></p>'
+                                st.markdown(row, unsafe_allow_html=True)
+                                row = f'<p style="font-family:verdana; margin-top: 0; margin-bottom: 0; color:Blue; font-size: 14px;">Current Price: {x2}</p>'
+                                st.markdown(row, unsafe_allow_html=True)
+
+                #-------------- New Transaction Row 2 ----------------
+                st.write ('\n')
+                col1, col2, col3, col4 = st.beta_columns([2,3,3,3])
+                with col1:
+                    if xAction == 'Sell' or xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                xTransDate = st.date_input('Transaction Date')
+                with col2:
+                    if xAction == 'Sell' or xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                xTransPrice = st.number_input('Transaction Price', format="%.4f")
+                with col3:
+                    if xAction == 'Sell' or xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                xShares = st.number_input('Shares', format="%.4f")
+
+                #-------------- New Transaction Row 3 ----------------
+                st.write ('\n')
+                col1, col2, col3 = st.beta_columns([3,0.2,7.5])
+                with col1:
+                    if xAction == 'Sell':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                if xTransPrice > 0:
+                                    if xShares > 0:
+                                        if st.button ('Submit'):
+                                            xPrevDate = (df_tick[df_tick.Ticker == xTickerChoice].BuyDate.item())
+                                            xPrevShares = (df_tick[df_tick.Ticker == xTickerChoice].Shares.item())
+                                            xPrevShareCost = (df_tick[df_tick.Ticker == xTickerChoice].ShareCost.item())
+                                            xPrevTotalCost = (df_tick[df_tick.Ticker == xTickerChoice].TotalCost.item())
+                                            process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, '', '', '', '')
+                                            print (df_tick[df_tick.Ticker == xTickerChoice].astype('str').values)
+                    elif xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                if xTransPrice > 0:
+                                    if xShares > 0:
+                                        if st.button ('Submit'):
+     
+                                            if ticker.info['quoteType'] == 'EQUITY':
+                                                price = ticker.info['currentPrice']
+                                                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
+                                                if ticker.info['dividendRate']:
+                                                    if ticker.info['dividendRate'] > 0:
+                                                        xDivList = getData_MarketWatchDividends(xTickerChoice)  # GET DIV PAY DATE, ETC
+                                                        xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                                                        # xDividendRate = ticker.info['dividendRate']
+                                                        # xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
+                                                        # xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
+                                                        # xDividend = xDivAmount + ' (' + xDivYield + ')'
+                                                        xDividend = xDivAmount
+                                                else:
+                                                    xDividend = '-'
+                                            else:
+                                                price = ticker.info['regularMarketPrice']
+                                                xDividend = str(ticker.info['yield'] * 100) + '%'
+
+
+                                            process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, '', '', '', '', xDivExDate, xDivPayDate, xDivFreq, xDivAmount)
+
+                with col3:
+                    if xAction == 'Sell' or xAction == 'Buy':
+                        if xAccountChoice != '':
+                            if xTickerChoice != '':
+                                if xTransPrice > 0:
+                                    if xShares > 0:
+                                        st.markdown (
+                                            f"""
+                                            {xAction} {xTickerChoice} {xShares} Shares @ ${xTransPrice} 
+                                            """
+                                        )
+
 
 
 
@@ -526,6 +610,48 @@ def app():
 
 
 
+    #------------------------ SAVE TRANSACTION TO GOOGLE SHEETS -----------------------#
+    def process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, xDivExDate, xDivPayDate, xDivFreq, xDivAmount):
+
+        with st.spinner('Loading Data...Please Wait...'):
+
+            if is_prod:
+                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
+            else:    
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
+
+            sheet = gc.open('Research')
+
+            if xAction == 'Sell':
+                #------- Add Sale Transaction ----------
+                wks = sheet.worksheet_by_title('Transactions')
+                values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+                #------- Update Portfolio CASH Balance ----------
+                wks = sheet.worksheet_by_title('Portfolio')
+                for idx, row in enumerate(wks):
+                    if (wks[idx+1][0]) == xAccountChoice:
+                        xAmt = float(xTransPrice) * float(xShares)
+                        if (wks[idx+1][1]) == xTickerChoice:
+                            wks.delete_rows(idx+1, number=1)
+                        elif (wks[idx+1][1]) == 'CASH':
+                            xTot = wks[idx+1][10]
+                            xTot = xTot.replace('$','')
+                            xTot = float(xTot.replace(',',''))
+                            wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
+
+            if xAction == 'Buy':
+                #------- Add Buy Transaction ----------
+                wks = sheet.worksheet_by_title('Portfolio')
+                values = [[xAccountChoice, xTickerChoice, None, str(xTransDate), xShares, xTransPrice, None, None, None, None, None, None, None, None, xDivAmount, None, None, None, xDivExDate, xDivPayDate, xDivFreq]]
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+
+
+            st.write('Transaction Processed!')
+                
+
+
+
 
     #------------------  MAIN  -----------------------------
     display_header()
@@ -543,11 +669,11 @@ def app():
     elif xSelection == 'Analysts': 
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 
-        pwd = st.sidebar.empty()
-        t = pwd.text_input("Enter Password")
-        if t != "":
-            if t == 'nella1':
-                pwd.empty()
+        # pwd = st.sidebar.empty()
+        # t = pwd.text_input("Enter Password")
+        # if t != "":
+        #     if t == 'nella1':
+        #         pwd.empty()
                 display_portfolio (xSelection)
 
 
