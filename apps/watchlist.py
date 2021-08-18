@@ -682,11 +682,11 @@ def app():
     elif xSelection == 'Analysts': 
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 
-        # pwd = st.sidebar.empty()
-        # t = pwd.text_input("Enter Password")
-        # if t != "":
-        #     if t == 'nella1':
-        #         pwd.empty()
+        pwd = st.sidebar.empty()
+        t = pwd.text_input("Enter Password")
+        if t != "":
+            if t == 'nella1':
+                pwd.empty()
                 display_portfolio (xSelection)
 
 
