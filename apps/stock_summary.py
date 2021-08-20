@@ -646,7 +646,7 @@ def app():
 
 
     #---------------  Technicals Selection  -------------------
-    if st.sidebar.checkbox("Technicals"):
+    if st.sidebar.checkbox("Technicals", value = True):
         with st.spinner('Loading Data...Please Wait...'):
             if symbol and 'symbol' in ticker.info:
 
@@ -743,7 +743,7 @@ def app():
     #---------------  Fundamentals Selection  -------------------
 
 
-    if st.sidebar.checkbox("Fundamentals"):
+    if st.sidebar.checkbox("Fundamentals", value = True):
         with st.spinner('Loading Data...Please Wait...'):
             if symbol and 'symbol' in ticker.info:
 
