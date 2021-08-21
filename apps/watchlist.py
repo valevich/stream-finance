@@ -395,17 +395,6 @@ def app():
                 # if submit:
                 #     st.write(f'hello {name}')
 
-                #--------- INPUT EXAMPLE 2 ------------
-                # st.title("An Input Form")
-                # field_1 = st.text_input('Your Name') 
-                # field_2 = st.text_area("Your address")
-                # start_date = datetime.date(1990, 7, 6)
-                # date = st.date_input('Your birthday', start_date)
-                # if date != start_date:
-                #     st.write (field_1)
-                #     st.write (field_2)
-                #     st.write (date)
-
     
                 #-------------- New Transaction Row 1 ----------------
                 col1, col2, col3, col4, col5 = st.beta_columns([1.5,1.5,1.5,1,4])
@@ -502,10 +491,6 @@ def app():
                                                     if ticker.info['dividendRate'] > 0:
                                                         xDivList = getData_MarketWatchDividends(xTickerChoice)  # GET DIV PAY DATE, ETC
                                                         xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
-                                                        # xDividendRate = ticker.info['dividendRate']
-                                                        # xDividendYield = str("%0.2f" % (float(xDividendRate) / float(price) * 100))
-                                                        # xDividend = str(xDividendRate) + ' (' + str(xDividendYield) + '%)'
-                                                        # xDividend = xDivAmount + ' (' + xDivYield + ')'
                                                         xDividend = xDivAmount
                                                 else:
                                                     xDividend = '-'
@@ -639,6 +624,7 @@ def app():
                             xTot = xTot.replace('$','')
                             xTot = float(xTot.replace(',',''))
                             wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
+
 
             if xAction == 'Buy':
                 #------- Add Sale Record to Transactions Sheet ----------

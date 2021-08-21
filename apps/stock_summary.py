@@ -330,10 +330,20 @@ def app():
                     # values = [[symbol,None,'xxx'],['aaa'],['bbb']]
                     # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
 
+                    xDayNo = datetime.datetime.today().weekday()
+                    if xDayNo == 5:    # 5 Sat
+                        end_date = date.today() + datetime.timedelta(days=2) # Add 2 days to Monday.
+                    else:  # 6 Sun
+                        end_date = date.today() + datetime.timedelta(days=1) # Add 1 days to Monday.
+                    xTradeDate = end_date.strftime('%m-%d-%Y')
+                    print(xTradeDate)
+
                     if xPortfolio == 'Analysts':
-                        values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                        # values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                        values = [[symbol, None, xAnalyst, xTradeDate, '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
                     else:
-                        values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                        # values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
+                        values = [[symbol, None, xTradeDate, '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
 
                     wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
 
@@ -556,7 +566,7 @@ def app():
             try:
                 #--------  Display Stock Price Graph ----------------- 
                 start = "2021-01-01" # start of graphics                   #
-                today = date.today()+ datetime.timedelta(days=1)
+                today = date.today() + datetime.timedelta(days=1)
                 d1 = today.strftime("%Y-%m-%d")
                 current_year, current_month, current_day = today.strftime("%Y"), today.strftime("%m"), today.strftime("%d")
                 tickerData = yf.download(symbol, start=start, end="{}".format(d1))
@@ -846,9 +856,6 @@ def app():
                         if ticker.info['regularMarketVolume']:
                             num = human_format(ticker.info['regularMarketVolume'])
                             st.write('Volume: ', num) 
-                        # if ticker.info['averageVolume10days']:
-                        #     num = human_format(ticker.info['averageVolume10days'])
-                        #     st.write('Average Volume: ', num) 
                         if 'trailingAnnualDividendRate' in ticker.info:
                             if ticker.info['trailingAnnualDividendRate']:
                                 st.write('Trailing Annual Dividend Rate: ',   "%0.2f" % ticker.info['trailingAnnualDividendRate'])
@@ -877,7 +884,7 @@ def app():
 
 
     #---------------  Analyst Recommendations  -------------------
-    if st.sidebar.checkbox("Analyst Ratings"):
+    if st.sidebar.checkbox("Analyst Ratings", value = True):
         with st.spinner('Loading Data...Please Wait...'):
             if symbol and 'symbol' in ticker.info:
 
