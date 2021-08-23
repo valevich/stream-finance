@@ -341,10 +341,8 @@ def app():
                     print(xTradeDate)
 
                     if xPortfolio == 'Analysts':
-                        # values = [[symbol, None, xAnalyst, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
                         values = [[symbol, None, xAnalyst, xTradeDate, '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
                     else:
-                        # values = [[symbol, None, str(date.today()), '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
                         values = [[symbol, None, xTradeDate, '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
 
                     wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added

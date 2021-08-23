@@ -886,13 +886,15 @@ def getData_MarketWatchDividends(ticker):
 
         xDivExDate = xList1[4]
         xDivPayDate = xList1[6]
-        xDivAmount = xList1[2]
+        # xDivAmount = xList1[2] 
+        xDivAmt = xList1[2].replace("$","")
+        xDivAmt2 = float(xDivAmt) * float(xDivFreq)
+        xDivAmount = str("%0.2f" % xDivAmt2)
         xDivYield = xList1[3]
 
-        xDivAmount = xList1[2].replace("$","")
-        xDivAmount = str("%0.2f" % (float(xDivAmount)))
 
         xList2 = [xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield]
+        print("xList1: " + str(xList1))
         print("xList2: " + str(xList2))
         # print("Dividend Ex Date: " + xDivExDate)
         # print("Dividend Pay Date: " + xDivPayDate)
