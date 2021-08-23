@@ -331,7 +331,9 @@ def app():
                     # values = [[symbol,'=GOOGLEFINANCE(\"'+ symbol +'\","name")',str(date.today()),'1',price,None,dividends]]
 
                     xDayNo = datetime.datetime.today().weekday()
-                    if xDayNo == 5:    # 5 Sat
+                    if xDayNo < 5:    # 0-4 Mon-Fri
+                        end_date = date.today()
+                    elif xDayNo == 5:    # 5 Sat
                         end_date = date.today() + datetime.timedelta(days=2) # Add 2 days to Monday.
                     else:  # 6 Sun
                         end_date = date.today() + datetime.timedelta(days=1) # Add 1 days to Monday.
