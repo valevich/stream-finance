@@ -31,7 +31,7 @@ def app():
             # st.markdown(new_title, unsafe_allow_html=True)
             # st.table(df_mw1.assign(hack='').set_index('hack'))
 
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([.5,1,1,1,1,1])
             #---------------  Dow  -------------------
             with col1:
                 row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'

@@ -6,6 +6,7 @@ from pygsheets.datarange import DataRange
 import plotly.graph_objects as go
 from apps.stock_scrape1 import getData_MarketWatch
 from apps.stock_scrape1 import getData_MarketWatchDividends
+from apps.stock_scrape2 import getData_stockinvest
 import datetime
 import yfinance as yf 
 
@@ -21,7 +22,7 @@ def app():
         symbol = 'AAPL'
         df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
         if len(df_mw1.index) > 0:
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([.5,1,1,1,1,1])
             #---------------  Dow  -------------------
             with col1:
                 row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
@@ -264,6 +265,8 @@ def app():
             xTotalValue, xTotalTodayPerc, xTotalTodayAvg, xTotalToday, xTotalGainLoss, xTotalGainLossPerc = [0] * 6
             xGrandTotalValue, xGrandTotalTodayPerc, xGrandTotalTodayAvg, xGrandTotalToday, xGrandTotalGainLoss, xGrandTotalGainLossPerc = [0] * 6
 
+            # st.dataframe (df1)   # TESTING
+
             df2 = df1.copy()
             df2['TotalValue'] = df2['TotalValue'].str.replace('$','')
             df2['TotalValue'] = df2['TotalValue'].str.replace(',','')
@@ -317,8 +320,9 @@ def app():
             st.write ('\n')
 
 
-            xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction')) 
+            xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction','Held Stocks')) 
 
+            #-------------------------  SUMMARY  --------------------------
             if xOption == 'Summary':
                 font_color = ['black'] * 6 + \
                     [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
@@ -349,6 +353,7 @@ def app():
                 fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=900,height=800)
                 st.write(fig)
 
+            #-------------------------  DETAIL  --------------------------
             elif xOption == 'Detail':
                 font_color = ['black'] * 9 + \
                     [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
@@ -383,21 +388,11 @@ def app():
                 fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1450,height=800)
                 st.write(fig)
 
+            #-------------------------  NEW TRANSACTION  --------------------------
             elif xOption == 'New Transaction':
-                #xxxxxxxxxxxxxxx
-                # user_input = st.text_input("label goes here", 'abc')
-                
-                #--------- INPUT EXAMPLE 1 ------------
-                # form = st.form(key='my-form')
-                # name = form.text_input('Enter your name')
-                # submit = form.form_submit_button('Submit')
-                # st.write('Press submit to have your name printed below')
-                # if submit:
-                #     st.write(f'hello {name}')
 
-    
                 #-------------- New Transaction Row 1 ----------------
-                col1, col2, col3, col4, col5 = st.beta_columns([1.5,1.5,1.5,1,4])
+                col1, col2, col3, col4, col5 = st.columns([1.5,1.5,1.5,1,4])
                 with col1:
                     xAction = st.selectbox(
                         'Select Buy/Sell',
@@ -444,7 +439,7 @@ def app():
 
                 #-------------- New Transaction Row 2 ----------------
                 st.write ('\n')
-                col1, col2, col3, col4 = st.beta_columns([2,3,3,3])
+                col1, col2, col3, col4 = st.columns([2,3,3,3])
                 with col1:
                     if xAction == 'Sell' or xAction == 'Buy':
                         if xAccountChoice != '':
@@ -463,7 +458,7 @@ def app():
 
                 #-------------- New Transaction Row 3 ----------------
                 st.write ('\n')
-                col1, col2, col3 = st.beta_columns([3,0.2,7.5])
+                col1, col2, col3 = st.columns([3,0.2,7.5])
                 with col1:
                     if xAction == 'Sell':
                         if xAccountChoice != '':
@@ -514,12 +509,94 @@ def app():
                                         )
 
 
+            #-------------------------  HELD STOCKS  --------------------------
+            elif xOption == 'Held Stocks':
+                xStopList = getData_stockinvest()
+                df = pd.DataFrame(xStopList)
+                df.columns =['Ticker', 'Score', 'Rating', 'Last Action', 'Today', 'CurrentStop', 'StopLoss', 'Volatility', 'Risk']
+                df = df.reindex(['Ticker','Today','CurrentStop','StopLoss','Score','Rating','Last Action','Volatility','Risk'], axis=1)
+
+                # s = df.style.applymap(color_negative_red)
+                # st.dataframe(s,1400,1100)
+
+                # st.dataframe(df.style.highlight_max(axis=0))
+                # df = df.style.apply(highlight_MOS)
+                # df.columns = df.columns.droplevel(1)
+                # df = df.style.set_properties(**{
+                #     'background-color': 'lavender',
+                #     'font-size': '9pt',
+                # })                
+                # st.dataframe(df,1400,1100)
+
+                new_style=(df.style
+                            .applymap(rating_color2, subset=['CurrentStop'])
+                            .applymap(rating_color, subset=['Rating'])
+                            .applymap(negative_red, subset=['Today'])
+                            .applymap(negative_red, subset=['Score'])
+                        )
+                st.dataframe(new_style, height=1400, width=1100)
+
+
+    def rating_color2(x):
+        if '*' in x:
+            y= 'background-color: lavender'
+        else:
+            y= 'color: black'
+        return y
+
+    def rating_color(x):
+        if x == 'Sell Candidate':
+            y= 'color: red'
+        elif x == 'Strong Sell Candidate':
+            y= 'color: red'
+        elif x == 'Buy Candidate':
+            y= 'color: green'
+        elif x == 'Strong Buy Candidate':
+            y= 'color: darkgreen'
+        elif x == 'Hold/Accumulate':
+            y= 'color: orange'
+        else:
+            y= 'color: black'
+        return y
+
+    def negative_red(x):
+        if '-' in x:
+            # y= 'background-color: red'
+            y= 'color: red'
+        else:
+            y= 'color: green'
+        return y
+
+
+    # def color_negative_red(val):
+    #     """
+    #     Takes a scalar and returns a string with
+    #     the css property `'color: red'` for negative
+    #     strings, black otherwise.
+    #     """
+    #     color = 'red' if '-' in val else 'black'
+    #     return 'color: %s' % color
+
+    # def highlight_MOS(s):
+    #     is_mos = s.index.get_level_values(1) == 'CASH'
+    #     return ['color: darkorange' if v else 'color: darkblue' for v in is_mos]
+
+    # def custom_styles(val):
+    #     # price column styles
+    #     if val.name == 'CurrentPrice':
+    #         styles = []
+    #         for i in val:
+    #             # styles.append('color: %s' % ('red' if i == 0 else 'black'))
+    #             styles.append('color: %s' % ('red' if '-' in i else 'black'))
+    #         return styles
+    #     # other columns will be yellow
+    #     # return ['background-color: yellow'] * len(val)
 
 
 
     def display_portfolio_totals(xCntr, xAccount, xTotalValue, xTotalTodayPerc, xTotalToday, xTotalGainLoss, xTotalGainLossPerc):
 
-        col0, buf, col1, col2, col3, col4, col5 = st.beta_columns([0.7,0.1,1,1,1,1,1])
+        col0, buf, col1, col2, col3, col4, col5 = st.columns([0.7,0.1,1,1,1,1,1])
         #---------------  Account Name  -------------------
         with col0:
             if xCntr < 2:
@@ -755,7 +832,7 @@ def app():
 
 
 
-    # news1, news2 = st.beta_columns([1,5])
+    # news1, news2 = st.columns([1,5])
 
     # with news1:
     #     st.image('https://cdn.pixabay.com/photo/2016/10/10/22/38/business-1730089_1280.jpg')

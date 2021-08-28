@@ -16,7 +16,7 @@ import markdown
 import pygsheets
 from google.oauth2 import service_account
 from gspread_pandas import Spread, Client
-from gsheetsdb import connect
+# from gsheetsdb import connect
 
 from apps.stock_scrape1 import getData_Zacks
 from apps.stock_scrape1 import getData_Dividata
@@ -364,7 +364,7 @@ def app():
     with st.spinner('Loading Data...Please Wait...'):
         df_mw1, df_mw2, df_mw3, df_mw4 = getData_MarketWatch(symbol)
         if len(df_mw1.index) > 0:
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([.5,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([.5,1,1,1,1,1])
             #---------------  Dow  -------------------
             with col1:
                 row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dow</b></p>'
@@ -462,7 +462,7 @@ def app():
             #---------------  Header (Equity) 3 Columns  -------------------
             if ticker.info['quoteType'] == 'EQUITY':
  
-                hdr1a,hdr1b,hdr1c = st.beta_columns([0.5,3.5,2])
+                hdr1a,hdr1b,hdr1c = st.columns([0.5,3.5,2])
                 with hdr1a:
                     if ticker.info['logo_url']:
                         st.image(ticker.info['logo_url'])
@@ -477,9 +477,9 @@ def app():
                 with hdr1c:
                     display_summary_equity(symbol,'1')
 
-                hdr2a,hdr2b, hdr2c = st.beta_columns([4,0.25,2.1])
+                hdr2a,hdr2b, hdr2c = st.columns([4,0.25,2.1])
                 with hdr2a:
-                    with st.beta_expander(f'Description: {summ[0:250]} ... Read more'):
+                    with st.expander(f'Description: {summ[0:250]} ... Read more'):
                         st.markdown(f'<p class="small-font"> {summ} !!</p>', unsafe_allow_html=True)
                 with hdr2c: 
                     display_summary_equity(symbol,'2')
@@ -491,7 +491,7 @@ def app():
                 xList2 = []
                 xList1, xList2 = getData_MarketWatchETFs(symbol)
 
-                hdr1,hdr2, hdr3, hdr4 = st.beta_columns([4,2,1,2])
+                hdr1,hdr2, hdr3, hdr4 = st.columns([4,2,1,2])
                 with hdr1: 
                     try:
                         st.subheader(ticker.info['longName'])
@@ -771,7 +771,7 @@ def app():
 
                     choice = st.sidebar.selectbox('Quarterly or Yearly Financials',['Yearly','Quarterly'])
 
-                    buffer, left, right = st.beta_columns([0.5,2,2])
+                    buffer, left, right = st.columns([0.5,2,2])
                     with left: 
                         if 'marketCap' in ticker.info:
                             if ticker.info['marketCap']:
@@ -842,7 +842,7 @@ def app():
 
                 else:
                     #---------------  Fundamentals (ETFs) 2 Columns  -------------------
-                    buffer, left, right = st.beta_columns([0.5,2,2])
+                    buffer, left, right = st.columns([0.5,2,2])
                     with left: 
                         if 'fundFamily' in ticker.info:
                             if ticker.info['fundFamily']:
@@ -903,7 +903,7 @@ def app():
                         col3 = recs['Firm']
                         col4 = recs['To Grade']
                         #the buffer = col1 and we never put anything in it
-                        buffer, col2, col3, col4 = st.beta_columns([1,2,2,2])
+                        buffer, col2, col3, col4 = st.columns([1,2,2,2])
                         col1a = str(recs['Date'][2])
                         col1b = str(recs['Date'][1])
                         col1c = str(recs['Date'][0])
@@ -984,7 +984,7 @@ def app():
             st.markdown('\n')
 
             #-----------------------  LINE 1  ------------------------------------
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([0.2,1,1,1,1,1])
             with col1:
                 link = f'[Yahoo Finance](https://finance.yahoo.com/quote/{symbol})'
                 st.markdown(link, unsafe_allow_html=True)
@@ -1003,7 +1003,7 @@ def app():
 
 
             #-----------------------  LINE 2  ------------------------------------
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([0.2,1,1,1,1,1])
             with col1:
                 link = f'[MarketWatch](https://www.marketbeat.com/stocks/NYSE/{symbol})'
                 st.markdown(link, unsafe_allow_html=True)
@@ -1022,7 +1022,7 @@ def app():
 
 
             #-----------------------  LINE 3  ------------------------------------
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([0.2,1,1,1,1,1])
             with col1:
                 link = f'[StockTwits](https://stocktwits.com/symbol/{symbol})'
                 st.markdown(link, unsafe_allow_html=True)
@@ -1041,7 +1041,7 @@ def app():
 
 
             #-----------------------  LINE 4  ------------------------------------
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([0.2,1,1,1,1,1])
             with col1:
                 link = f'[ValueLine](https://research.valueline.com/research#list=recent&sec=company&sym={symbol})'
                 st.markdown(link, unsafe_allow_html=True)
@@ -1060,7 +1060,7 @@ def app():
 
 
             #-----------------------  LINE 5  ------------------------------------
-            buffer, col1, col2, col3, col4, col5 = st.beta_columns([0.2,1,1,1,1,1])
+            buffer, col1, col2, col3, col4, col5 = st.columns([0.2,1,1,1,1,1])
             with col1:
                 link = f'[GuruFocus](https://www.gurufocus.com/stock/{symbol}/summary)'
                 st.markdown(link, unsafe_allow_html=True)
