@@ -377,7 +377,7 @@ def getData_Dividata(ticker):
         df1 = df1.transpose()
         df1.columns = df1.iloc[0]
         df1.columns =['Annual\nDividend', 'Dividend\nYield', 'Ex-Dividend\nDate', 'Pay\nDate', 'Last\nDividend', 
-            'Overall\nRating', 'Dividend\nYield', 'Dividend\nHistory', 'Dividend\nStability']
+            'Overall\nRating', 'Dividend\nYield Rating', 'Dividend\nHistory', 'Dividend\nStability']
         print (tabulate(df1, headers='keys', tablefmt='psql', showindex=False))
 
 
