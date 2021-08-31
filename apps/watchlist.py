@@ -10,6 +10,9 @@ from apps.stock_scrape2 import getData_stockinvest
 import datetime
 import yfinance as yf 
 import time
+from st_aggrid import AgGrid                                 
+from st_aggrid.grid_options_builder import GridOptionsBuilder
+from st_aggrid.shared import JsCode
 
 
 def app():
@@ -120,8 +123,6 @@ def app():
 
             xLists = ['Watchlist','Dividends','ETFs','ToBuy']
             if gsheet in xLists:
-
-            # if gsheet != 'AnalystsRankings' and != 'Portfolio':
                 df.drop(
                     columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
                 )
@@ -215,7 +216,7 @@ def app():
                 df1 = df1.loc[(df1['Source'] == xAnalystsChoice)]
 
 
-            font_color = ['black'] * 6 + \
+            font_color = ['black'] * 7 + \
                 [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
                 ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
                 ['black']]
@@ -523,86 +524,61 @@ def app():
                 df.columns =['Ticker', 'Score', 'Rating', 'LastAction', 'Today', 'CurrentStop', 'StopLoss', 'Volatility', 'Risk']
                 df = df.reindex(['Ticker','Today','CurrentStop','StopLoss','Score','Rating','LastAction','Volatility','Risk'], axis=1)
 
-                new_style=(df.style
-                            .applymap(currentstop_color, subset=['CurrentStop'])
-                            .applymap(rating_color, subset=['Rating'])
-                            .applymap(lastaction_color, subset=['LastAction'])
-                            .applymap(negative_red, subset=['Today', 'Score'])
-                        )
-                st.dataframe(new_style, height=1400, width=1100)
+                style_negative = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('-')) {return {'color': 'red'}} 
+                        else {return {'color': 'green'}}
+                    };
+                    """
+                )
+                style_currentstop = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('*')) {return {'backgroundColor': 'lavender'}} 
+                    };
+                    """
+                )
+                style_rating = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('Sell')) {return {'color': 'red'}} 
+                        else if (params.value.includes('Buy')) {return {'color': 'green'}} 
+                    };
+                    """
+                )
+                style_lastaction = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('Downgraded')) {return {'color': 'red'}} 
+                        else if (params.value.includes('Upgraded')) {return {'color': 'green'}} 
+                    };
+                    """
+                )
+                gb = GridOptionsBuilder.from_dataframe(df)
+                gb.configure_default_column(groupable=True, 
+                                                value=True, 
+                                                enableRowGroup=True, 
+                                                editable=True,
+                                                enableRangeSelection=True,
+                                            )
+                gb.configure_column("Today", cellStyle=style_negative)
+                gb.configure_column("Score", cellStyle=style_negative)
+                gb.configure_column("CurrentStop", cellStyle=style_currentstop)
+                gb.configure_column("Rating", cellStyle=style_rating)
+                gb.configure_column("LastAction", cellStyle=style_lastaction)
+                gridOptions = gb.build()
+                data = AgGrid(
+                    df,
+                    gridOptions=gridOptions,
+                    height=1000,
+                    width='100%',
+                    enable_enterprise_modules=True,
+                    allow_unsafe_jscode=True
+                )
 
 
-    def currentstop_color(x):
-        if '*' in x:
-            y= 'background-color: lavender'
-        else:
-            y= 'color: black'
-        return y
 
-    def rating_color(x):
-        if x == 'Sell Candidate':
-            y= 'color: red'
-        elif x == 'Strong Sell Candidate':
-            y= 'color: red'
-        elif x == 'Buy Candidate':
-            y= 'color: green'
-        elif x == 'Strong Buy Candidate':
-            y= 'color: darkgreen'
-        elif x == 'Hold/Accumulate':
-            y= 'color: orange'
-        else:
-            y= 'color: black'
-        return y
-
-    def lastaction_color(x):
-        if x == 'Downgraded':
-            y= 'color: red'
-        elif x == 'Upgraded':
-            y= 'color: green'
-        else:
-            y= 'color: black'
-        return y
-
-    def negative_red(x):
-        if '-' in x:
-            y= 'color: red'
-        else:
-            y= 'color: green'
-        return y
-
-
-                # st.dataframe(df.style.highlight_max(axis=0))
-                # df = df.style.apply(highlight_MOS)
-                # df.columns = df.columns.droplevel(1)
-                # df = df.style.set_properties(**{
-                #     'background-color': 'lavender',
-                #     'font-size': '9pt',
-                # })                
-                # st.dataframe(df,1400,1100)
-
-    # def color_negative_red(val):
-    #     """
-    #     Takes a scalar and returns a string with
-    #     the css property `'color: red'` for negative
-    #     strings, black otherwise.
-    #     """
-    #     color = 'red' if '-' in val else 'black'
-    #     return 'color: %s' % color
-
-    # def highlight_MOS(s):
-    #     is_mos = s.index.get_level_values(1) == 'CASH'
-    #     return ['color: darkorange' if v else 'color: darkblue' for v in is_mos]
-
-    # def custom_styles(val):
-    #     # price column styles
-    #     if val.name == 'CurrentPrice':
-    #         styles = []
-    #         for i in val:
-    #             # styles.append('color: %s' % ('red' if i == 0 else 'black'))
-    #             styles.append('color: %s' % ('red' if '-' in i else 'black'))
-    #         return styles
-    #     # other columns will be yellow
-    #     # return ['background-color: yellow'] * len(val)
 
 
 
@@ -912,3 +888,51 @@ def app():
         #         df = load_the_spreadsheet('IPOs')
         #         new_df = df.append(opt_df,ignore_index=True)
         #         update_the_spreadsheet('IPOs', new_df)
+
+
+
+
+            #     new_style=(df.style
+            #                 .applymap(currentstop_color, subset=['CurrentStop'])
+            #                 .applymap(rating_color, subset=['Rating'])
+            #                 .applymap(lastaction_color, subset=['LastAction'])
+            #                 .applymap(negative_red, subset=['Today', 'Score'])
+            #             )
+            #     st.dataframe(new_style, height=1400, width=1100)
+    # def currentstop_color(x):
+    #     if '*' in x:
+    #         y= 'background-color: lavender'
+    #     else:
+    #         y= 'color: black'
+    #     return y
+
+    # def rating_color(x):
+    #     if x == 'Sell Candidate':
+    #         y= 'color: red'
+    #     elif x == 'Strong Sell Candidate':
+    #         y= 'color: red'
+    #     elif x == 'Buy Candidate':
+    #         y= 'color: green'
+    #     elif x == 'Strong Buy Candidate':
+    #         y= 'color: darkgreen'
+    #     elif x == 'Hold/Accumulate':
+    #         y= 'color: orange'
+    #     else:
+    #         y= 'color: black'
+    #     return y
+
+    # def lastaction_color(x):
+    #     if x == 'Downgraded':
+    #         y= 'color: red'
+    #     elif x == 'Upgraded':
+    #         y= 'color: green'
+    #     else:
+    #         y= 'color: black'
+    #     return y
+
+    # def negative_red(x):
+    #     if '-' in x:
+    #         y= 'color: red'
+    #     else:
+    #         y= 'color: green'
+    #     return y

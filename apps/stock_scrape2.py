@@ -34,7 +34,7 @@ def getData_stockinvest():
     # for i in xList3:
     #     symbol = i
     #     print (symbol)
-    #     xCurrentStopLoss = '-'
+    #     xCurrentStopLoss = '6.00*'
     #     xList = getData_ticker(symbol, xCurrentStopLoss)
     #     xList2.append(xList)
     ##### TESTING ONLY ####
