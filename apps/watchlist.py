@@ -9,6 +9,7 @@ from apps.stock_scrape1 import getData_MarketWatchDividends
 from apps.stock_scrape2 import getData_stockinvest
 import datetime
 import yfinance as yf 
+import time
 
 
 def app():
@@ -265,8 +266,6 @@ def app():
             xTotalValue, xTotalTodayPerc, xTotalTodayAvg, xTotalToday, xTotalGainLoss, xTotalGainLossPerc = [0] * 6
             xGrandTotalValue, xGrandTotalTodayPerc, xGrandTotalTodayAvg, xGrandTotalToday, xGrandTotalGainLoss, xGrandTotalGainLossPerc = [0] * 6
 
-            # st.dataframe (df1)   # TESTING
-
             df2 = df1.copy()
             df2['TotalValue'] = df2['TotalValue'].str.replace('$','')
             df2['TotalValue'] = df2['TotalValue'].str.replace(',','')
@@ -279,7 +278,15 @@ def app():
             df2['GainLossPerc'] = df2['GainLossPerc'].str.replace('%','')
             df2['GainLossPerc'] = df2['GainLossPerc'].str.replace(',','')
             df2['GainLossPerc'] = pd.to_numeric(df2['GainLossPerc'], errors='coerce').astype('float')
+
+            for i in range(0, len(df2)):
+                # st.write ('TotalValue')
+                # st.write (df2['TotalValue'])
+                if 'Loading...' in df2.iloc[i]['TotalValue']:
+                    time.sleep(3)
+                    st.write ('Sleeping...')
             df2['TotalValue'] = df2.TotalValue.astype(float)
+
             df2['TodayPerc'] = df2.TodayPerc.astype(float)
             df2['GainLoss'] = df2.GainLoss.astype(float)
             df2['GainLossPerc'] = df2.GainLossPerc.astype(float)
@@ -513,31 +520,19 @@ def app():
             elif xOption == 'Held Stocks':
                 xStopList = getData_stockinvest()
                 df = pd.DataFrame(xStopList)
-                df.columns =['Ticker', 'Score', 'Rating', 'Last Action', 'Today', 'CurrentStop', 'StopLoss', 'Volatility', 'Risk']
-                df = df.reindex(['Ticker','Today','CurrentStop','StopLoss','Score','Rating','Last Action','Volatility','Risk'], axis=1)
-
-                # s = df.style.applymap(color_negative_red)
-                # st.dataframe(s,1400,1100)
-
-                # st.dataframe(df.style.highlight_max(axis=0))
-                # df = df.style.apply(highlight_MOS)
-                # df.columns = df.columns.droplevel(1)
-                # df = df.style.set_properties(**{
-                #     'background-color': 'lavender',
-                #     'font-size': '9pt',
-                # })                
-                # st.dataframe(df,1400,1100)
+                df.columns =['Ticker', 'Score', 'Rating', 'LastAction', 'Today', 'CurrentStop', 'StopLoss', 'Volatility', 'Risk']
+                df = df.reindex(['Ticker','Today','CurrentStop','StopLoss','Score','Rating','LastAction','Volatility','Risk'], axis=1)
 
                 new_style=(df.style
-                            .applymap(rating_color2, subset=['CurrentStop'])
+                            .applymap(currentstop_color, subset=['CurrentStop'])
                             .applymap(rating_color, subset=['Rating'])
-                            .applymap(negative_red, subset=['Today'])
-                            .applymap(negative_red, subset=['Score'])
+                            .applymap(lastaction_color, subset=['LastAction'])
+                            .applymap(negative_red, subset=['Today', 'Score'])
                         )
                 st.dataframe(new_style, height=1400, width=1100)
 
 
-    def rating_color2(x):
+    def currentstop_color(x):
         if '*' in x:
             y= 'background-color: lavender'
         else:
@@ -559,14 +554,31 @@ def app():
             y= 'color: black'
         return y
 
+    def lastaction_color(x):
+        if x == 'Downgraded':
+            y= 'color: red'
+        elif x == 'Upgraded':
+            y= 'color: green'
+        else:
+            y= 'color: black'
+        return y
+
     def negative_red(x):
         if '-' in x:
-            # y= 'background-color: red'
             y= 'color: red'
         else:
             y= 'color: green'
         return y
 
+
+                # st.dataframe(df.style.highlight_max(axis=0))
+                # df = df.style.apply(highlight_MOS)
+                # df.columns = df.columns.droplevel(1)
+                # df = df.style.set_properties(**{
+                #     'background-color': 'lavender',
+                #     'font-size': '9pt',
+                # })                
+                # st.dataframe(df,1400,1100)
 
     # def color_negative_red(val):
     #     """

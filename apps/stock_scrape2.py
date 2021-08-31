@@ -16,7 +16,9 @@ from lxml import html
 #---------------------------------------------------------------------------------------#
 def getData_stockinvest():
 
-    print ('START stock_scrape2.py - getData_stockinvest()')
+    print ('------------------------------------------------------')
+    print ('    START stock_scrape2.py - getData_stockinvest()    ')
+    print ('------------------------------------------------------')
 
     is_prod = os.environ.get('IS_HEROKU', None)
 
@@ -116,6 +118,7 @@ def getData_ticker(symbol, xCurrentStopLoss):
     try:
         xVolatility = soup.find("span", {"card-text my-auto"}).text.strip()
         xVolatility = xVolatility[:-25]
+        xVolatility = xVolatility.replace(" ", "")
     except:
         xVolatility = 'N/A'
 
@@ -143,7 +146,6 @@ def getData_ticker(symbol, xCurrentStopLoss):
         x1 = xCurrentStopLoss[xCurrentStopLoss.find('(')+1:xCurrentStopLoss.find('%')]
         x1 = x1.replace('-','')
         x1 = float(x1)
-        print (x1)
         if x1 > 5.00:
             xCurrentStopLoss = xCurrentStopLoss + '*'
     

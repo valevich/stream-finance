@@ -754,6 +754,7 @@ def app():
 
 
     if st.sidebar.checkbox("Fundamentals", value = True):
+    # if st.sidebar.checkbox("Fundamentals"):
         with st.spinner('Loading Data...Please Wait...'):
             if symbol and 'symbol' in ticker.info:
 
