@@ -121,16 +121,16 @@ def app():
             wks = sheet.worksheet_by_title(gsheet)
             df = wks.get_as_df()
 
-            xLists = ['Watchlist','Dividends','ETFs','ToBuy']
-            if gsheet in xLists:
-                df.drop(
-                    columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
-                )
-                for i in range(len(df)):
-                    if '(' in df['Dividend_Yield'].values[i]:
-                        xDividend_Yield = str(df.Dividend_Yield)
-                        xDividend_Yield = xDividend_Yield[xDividend_Yield.find("(")+1:xDividend_Yield.find(")")]
-                        df['Dividend_Yield'].values[i] = xDividend_Yield
+            # xLists = ['Watchlist','Dividends','ETFs','ToBuy']
+            # if gsheet in xLists:
+            #     df.drop(
+            #         columns=["7_day_Change", "30_day_Change", "90_day_Change", "Out_Shares"]
+            #     )
+            #     for i in range(len(df)):
+            #         if '(' in df['Dividend_Yield'].values[i]:
+            #             xDividend_Yield = str(df.Dividend_Yield)
+            #             xDividend_Yield = xDividend_Yield[xDividend_Yield.find("(")+1:xDividend_Yield.find(")")]
+            #             df['Dividend_Yield'].values[i] = xDividend_Yield
 
             return df
 
@@ -141,38 +141,90 @@ def app():
 
             st.title(gsheet)
             df1 = load_gsheet(gsheet)
+            df1.drop(df1.columns[[3]], axis = 1, inplace = True)
+            df1.rename(columns = {'Buy_Date':'Buy Date', 
+                    'Today_Perc':'Today%',
+                    'Gain_Loss':'Gain',
+                    'Dividend_Yield':'Yield',
+                    'Div_Ex_Date':'Ex-Date',
+                    'Div_Pay_Date':'Pay Date',
+                    'Div_Freq':'Freq'},
+                        inplace=True)
+            style_negative = JsCode(
+                """
+                function(params) {
+                    if (params.value.includes('-')) {return {'color': 'red'}} 
+                    else {return {'color': 'green'}}
+                };
+                """
+            )
+            gb = GridOptionsBuilder.from_dataframe(df1)
+            gb.configure_default_column(groupable=True, 
+                                            value=True, 
+                                            enableRowGroup=True, 
+                                            editable=True,
+                                            enableRangeSelection=True,
+                                        )
+            gb.configure_column("Ticker", maxWidth=75)
+            gb.configure_column("Company", maxWidth=200)
+            gb.configure_column("Buy Date", maxWidth=100)
+            gb.configure_column("Cost", maxWidth=85)
+            gb.configure_column("Today", maxWidth=85)
+            gb.configure_column("Today%", cellStyle=style_negative, maxWidth=88)
+            gb.configure_column("Gain", cellStyle=style_negative, maxWidth=85)
+            gb.configure_column("Yield", maxWidth=100)
+            gb.configure_column("Ex-Date", maxWidth=100)
+            gb.configure_column("Pay Date", maxWidth=100)
+            gb.configure_column("Freq", maxWidth=80)
+            # gb.configure_column("Today_Perc", cellStyle=style_negative)
+            # gb.configure_column("Gain_Loss", cellStyle=style_negative)
+            gridOptions = gb.build()
+            data = AgGrid(
+                df1,
+                gridOptions=gridOptions,
+                height=850,
+                width='100%',
+                theme='light',     # valid themes: 'streamlit', 'light', 'dark', 'blue', 'fresh', 'material'
+                # defaultWidth=25,
+                # fit_columns_on_grid_load=True, 
+                enable_enterprise_modules=True,
+                allow_unsafe_jscode=True
+            )
 
-            font_color = ['black'] * 6 + \
-                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
-                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
-                ['black']]
+            #------------   Using Plotly Tables - Replaced with Ag-Grid  --------------
+            # st.title(gsheet)
+            # df1 = load_gsheet(gsheet)
+            # font_color = ['black'] * 6 + \
+            #     [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+            #     ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+            #     ['black']]
+            # fig = go.Figure(data=[go.Table(
+            #     columnwidth=[1,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
+            #     header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shares', 'Cost/Share', 
+            #                             'Today', 'Today %', 'Gain/Loss', 'Div Yield',
+            #                             'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
+            #                             '52-Week Low', '52-Week High', 'EPS', 'PE',
+            #                             'Mkt Cap', 'Volume']),
+            #                 fill_color='paleturquoise',
+            #                 font=dict(color='black', family='Arial, sans-serif', size=10),
+            #                 align='center'),
+            #     cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
+            #                     df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+            #                     df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
+            #                     df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+            #                     df1.PE, df1.Mkt_Cap, df1.Volume, ],
+            #             fill_color='lavender',
+            #             font_color=font_color,
+            #             height=25,
+            #             font=dict(size=11),
+            #             align = ['left', 'left', 'center', 'center', 'right']
+            #         )
+            #     )
+            # ])
+            # fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1200,height=800)
+            # st.write(fig)
+            #--------------------------------------------------------------------------------------
 
-            fig = go.Figure(data=[go.Table(
-                columnwidth=[1,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
-                header=dict(values=list(['Symbol', 'Name', 'Buy Date', 'Shares', 'Cost/Share', 
-                                        'Today', 'Today %', 'Gain/Loss', 'Div Yield',
-                                        'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
-                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
-                                        'Mkt Cap', 'Volume']),
-                            fill_color='paleturquoise',
-                            font=dict(color='black', family='Arial, sans-serif', size=10),
-                            align='center'),
-                cells=dict(values=[df1.Ticker, df1.Company, df1.Buy_Date, df1.Shares,
-                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
-                                df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
-                                df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
-                                df1.PE, df1.Mkt_Cap, df1.Volume, ],
-                        fill_color='lavender',
-                        font_color=font_color,
-                        height=25,
-                        font=dict(size=11),
-                        align = ['left', 'left', 'center', 'center', 'right']
-                    )
-                )
-            ])
-
-            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1200,height=800)
-            st.write(fig)
 
 
 
@@ -183,69 +235,135 @@ def app():
                 st.title('Analyst Rankings')
                 df0 = load_gsheet('AnalystsRankings')
 
-                font_color = ['black'] * 2 + \
-                    [['red' if  boolv else 'green' for boolv in df0['Average_Return'].str.contains('-')],
-                    ['black']]
-
-                fig = go.Figure(data=[go.Table(
-                    columnwidth=[4,1.5,1.5],
-                    header=dict(values=list(['Analyst', 'Total Tickers', 'Average Return']),
-                            fill_color='paleturquoise',
-                            font=dict(color='black', family='Arial, sans-serif', size=10),
-                            align=['left', 'right']),
-                    cells=dict(values=[df0.Source, df0.Tickers, df0.Average_Return],
-                            fill_color='lavender',
-                            font_color=font_color,
-                            height=25,
-                            font=dict(size=11),
-                            align=['left', 'right']
-                        )
-                    )
-                ])
-                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=500,height=700)
-                st.write(fig)
-
-
-            df1 = load_gsheet(gsheet)
-            st.title(gsheet)
-
-            xAnalysts = df1['Source'].unique().tolist()
-            xAnalysts.insert(0,'All')
-            xAnalystsChoice = st.sidebar.selectbox('Select Analyst:', xAnalysts)
-            if xAnalystsChoice != 'All':
-                df1 = df1.loc[(df1['Source'] == xAnalystsChoice)]
-
-
-            font_color = ['black'] * 7 + \
-                [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
-                ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
-                ['black']]
-
-            fig = go.Figure(data=[go.Table(
-                columnwidth=[1,3.5,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
-                header=dict(values=list(['Symbol', 'Name',  'Analyst', 'Buy Date', 'Shares', 'Cost/Share', 
-                                        'Today', 'Today %', 'Gain/Loss', 'Div Yield',
-                                        'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
-                                        '52-Week Low', '52-Week High', 'EPS', 'PE',
-                                        'Mkt Cap', 'Volume']),
-                            fill_color='paleturquoise',
-                            font=dict(color='black', family='Arial, sans-serif', size=10),
-                            align='center'),
-                cells=dict(values=[df1.Ticker, df1.Company, df1.Source, df1.Buy_Date, df1.Shares,
-                                df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
-                                df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
-                                df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
-                                df1.PE, df1.Mkt_Cap, df1.Volume, ],
-                        fill_color='lavender',
-                        font_color=font_color,
-                        height=25,
-                        font=dict(size=11),
-                        align = ['left', 'left', 'left', 'center', 'center', 'right']
-                    )
+                style_AvgReturn = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('-')) {return {'backgroundColor': 'pink'}} 
+                        else {return {'backgroundColor': 'lightgreen'}} 
+                    };
+                    """
                 )
-            ])
-            fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1400,height=800)
-            st.write(fig)
+                gb = GridOptionsBuilder.from_dataframe(df0)
+                gb.configure_default_column(groupable=True, 
+                                                value=True, 
+                                                enableRowGroup=True, 
+                                                editable=True,
+                                                enableRangeSelection=True,
+                                            )
+                gb.configure_column("Average_Return", cellStyle=style_AvgReturn)
+                gridOptions = gb.build()
+                data = AgGrid(
+                    df0,
+                    gridOptions=gridOptions,
+                    height=850,
+                    width='100%',
+                    theme='light',     # valid themes: 'streamlit', 'light', 'dark', 'blue', 'fresh', 'material'
+                    enable_enterprise_modules=True,
+                    allow_unsafe_jscode=True
+                )
+
+            #------------   Using Plotly Tables - Replaced with Above Ag-Grid  --------------
+                # font_color = ['black'] * 2 + \
+                #     [['red' if  boolv else 'green' for boolv in df0['Average_Return'].str.contains('-')],
+                #     ['black']]
+                # fig = go.Figure(data=[go.Table(
+                #     columnwidth=[4,1.5,1.5],
+                #     header=dict(values=list(['Analyst', 'Total Tickers', 'Average Return']),
+                #             fill_color='paleturquoise',
+                #             font=dict(color='black', family='Arial, sans-serif', size=10),
+                #             align=['left', 'right']),
+                #     cells=dict(values=[df0.Source, df0.Tickers, df0.Average_Return],
+                #             fill_color='lavender',
+                #             font_color=font_color,
+                #             height=25,
+                #             font=dict(size=11),
+                #             align=['left', 'right']
+                #         )
+                #     )
+                # ])
+                # fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=500,height=700)
+                # st.write(fig)
+            #--------------------------------------------------------------------------------------
+
+
+            st.title(gsheet)
+            df1 = load_gsheet(gsheet)
+            df1.drop(df1.columns[[1, 4, 9, 10, 11, 12]], axis = 1, inplace = True)
+            # xAnalysts = df1['Source'].unique().tolist()
+            # xAnalysts.insert(0,'All')
+            # xAnalystsChoice = st.sidebar.selectbox('Select Analyst:', xAnalysts)
+            # if xAnalystsChoice != 'All':
+            #     df1 = df1.loc[(df1['Source'] == xAnalystsChoice)]
+
+            style_negative = JsCode(
+                """
+                function(params) {
+                    if (params.value.includes('-')) {return {'color': 'red'}} 
+                    else {return {'color': 'green'}}
+                };
+                """
+            )
+            style_AvgReturn = JsCode(
+                """
+                function(params) {
+                    if (params.value.includes('-')) {return {'backgroundColor': 'pink'}} 
+                    else {return {'backgroundColor': 'lightgreen'}} 
+                };
+                """
+            )
+            gb = GridOptionsBuilder.from_dataframe(df1)
+            gb.configure_default_column(groupable=True, 
+                                            value=True, 
+                                            enableRowGroup=True, 
+                                            editable=True,
+                                            enableRangeSelection=True,
+                                        )
+            gb.configure_column("Today_Perc", cellStyle=style_negative)
+            gb.configure_column("Gain_Loss", cellStyle=style_negative)
+            gb.configure_column("AvgReturn", cellStyle=style_AvgReturn)
+            gridOptions = gb.build()
+            data = AgGrid(
+                df1,
+                gridOptions=gridOptions,
+                height=1000,
+                width='100%',
+                theme='light',     # valid themes: 'streamlit', 'light', 'dark', 'blue', 'fresh', 'material'
+                enable_enterprise_modules=True,
+                allow_unsafe_jscode=True
+            )
+
+            #------------       Using Plotly Tables - Replaced with Above Ag-Grid      --------------
+            # font_color = ['black'] * 7 + \
+            #     [['red' if  boolv else 'green' for boolv in df1['Today_Perc'].str.contains('-')],
+            #     ['red' if  boolv else 'green' for boolv in df1['Gain_Loss'].str.contains('-')],
+            #     ['black']]
+
+            # fig = go.Figure(data=[go.Table(
+            #     columnwidth=[1,3.5,3.5,1.3,0.7,1.3,1.3,1.1,1.1,1.2,1.9,1.9,0.7,1.3,1.3,1,1,1.1,1.1,1.1],
+            #     header=dict(values=list(['Symbol', 'Name',  'Analyst', 'Buy Date', 'Shares', 'Cost/Share', 
+            #                             'Today', 'Today %', 'Gain/Loss', 'Div Yield',
+            #                             'Div Ex-Date', 'Div Pay-Date', 'Div Freq', 
+            #                             '52-Week Low', '52-Week High', 'EPS', 'PE',
+            #                             'Mkt Cap', 'Volume']),
+            #                 fill_color='paleturquoise',
+            #                 font=dict(color='black', family='Arial, sans-serif', size=10),
+            #                 align='center'),
+            #     cells=dict(values=[df1.Ticker, df1.Company, df1.Source, df1.Buy_Date, df1.Shares,
+            #                     df1.Cost, df1.Today, df1.Today_Perc, df1.Gain_Loss,
+            #                     df1.Dividend_Yield, df1.Div_Ex_Date, df1.Div_Pay_Date, 
+            #                     df1.Div_Freq, df1.Low_52_wk, df1.High_52_wk, df1.EPS,
+            #                     df1.PE, df1.Mkt_Cap, df1.Volume, ],
+            #             fill_color='lavender',
+            #             font_color=font_color,
+            #             height=25,
+            #             font=dict(size=11),
+            #             align = ['left', 'left', 'left', 'center', 'center', 'right']
+            #         )
+            #     )
+            # ])
+            # fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1400,height=800)
+            # st.write(fig)
+            #--------------------------------------------------------------------------------------
 
 
 
@@ -279,15 +397,7 @@ def app():
             df2['GainLossPerc'] = df2['GainLossPerc'].str.replace('%','')
             df2['GainLossPerc'] = df2['GainLossPerc'].str.replace(',','')
             df2['GainLossPerc'] = pd.to_numeric(df2['GainLossPerc'], errors='coerce').astype('float')
-
-            for i in range(0, len(df2)):
-                # st.write ('TotalValue')
-                # st.write (df2['TotalValue'])
-                if 'Loading...' in df2.iloc[i]['TotalValue']:
-                    time.sleep(3)
-                    st.write ('Sleeping...')
             df2['TotalValue'] = df2.TotalValue.astype(float)
-
             df2['TodayPerc'] = df2.TodayPerc.astype(float)
             df2['GainLoss'] = df2.GainLoss.astype(float)
             df2['GainLossPerc'] = df2.GainLossPerc.astype(float)
@@ -330,71 +440,147 @@ def app():
 
             xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction','Held Stocks')) 
 
-            #-------------------------  SUMMARY  --------------------------
-            if xOption == 'Summary':
-                font_color = ['black'] * 6 + \
-                    [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
-                    ['black'], ['black'],
-                    ['red' if  boolv else 'green' for boolv in df1['GainLoss'].str.contains('-')],
-                    ['red' if  boolv else 'green' for boolv in df1['GainLossPerc'].str.contains('-')],
-                    ['black']]
+            #-------------------------  PORTFOLIO SUMMARY OR DETAIL VIEW --------------------------
+            if xOption == 'Summary' or xOption == 'Detail':
 
-                fig = go.Figure(data=[go.Table(
-                    columnwidth=[1.1,1,3.5,1,1.4,1.3,1.1,1.4,1.4,1.3,1.2,1.2],
-                    header=dict(values=list(['Account', 'Symbol', 'Company',  'Shares', 'Cost/Share', 
-                                    'Today', 'Today %', 'Total Value', 'Total Cost', 
-                                    'Gain/Loss', 'Gain/Loss %', 'Div Yield']),
-                            fill_color='paleturquoise',
-                            font=dict(color='black', family='Arial, sans-serif', size=10),
-                            align='center'),
-                    cells=dict(values=[df1.Account, df1.Ticker, df1.Company, df1.Shares, df1.ShareCost,
-                                    df1.Today, df1.TodayPerc, df1.TotalValue, df1.TotalCost, 
-                                    df1.GainLoss, df1.GainLossPerc, df1.DivYield],
-                            fill_color='lavender',
-                            font_color=font_color,
-                            height=25,
-                            font=dict(size=11),
-                            align = ['left', 'left', 'left', 'center', 'center', 'right']
-                        )
-                    )
-                ])
-                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=900,height=800)
-                st.write(fig)
+                df1.rename(columns = {'BuyDate':'Date', 
+                        'ShareCost':'Cost',
+                        'StopLoss':'Stop',
+                        'StopLossPerc':'Stop%',
+                        'TodayPerc':'Today%',
+                        'GainLoss':'Gain',
+                        'TotalValue':'Value',
+                        'GainLossPerc':'Gain%',
+                        'DivYield':'Yield',
+                        'Dividend':'DivRate',
+                        'DivAnnual':'Annual',
+                        'DivYieldCost':'YieldCost',
+                        'ExDivDate':'Ex-Date',
+                        'DivPayDate':'PayDate',
+                        'DivFreq':'Freq'},
+                            inplace=True)
 
-            #-------------------------  DETAIL  --------------------------
-            elif xOption == 'Detail':
-                font_color = ['black'] * 9 + \
-                    [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
-                    ['black'], ['black'],
-                    ['red' if  boolv else 'green' for boolv in df1['GainLoss'].str.contains('-')],
-                    ['red' if  boolv else 'green' for boolv in df1['GainLossPerc'].str.contains('-')],
-                    ['black']]
+                if xOption == 'Summary':
+                    df1.drop(df1.columns[[3,6,14,16,17,18,19,20]], axis = 1, inplace = True)
 
-                fig = go.Figure(data=[go.Table(
-                    columnwidth=[1.1,1,3.5,1.3,1,1.4,1.4,1.1,1.3,1.1,1.7,1.7,1.5,1.2,1.1,1,1.3,1.2,1.5,1.5,0.7],
-                    header=dict(values=list(['Account', 'Symbol', 'Company',  'Buy Date', 'Shares', 'Cost/Share', 
-                                    'Stop/Loss', 'Stop/Loss %', 'Today', 'Today %', 
-                                    'Total Value', 'Total Cost', 'Gain/Loss', 'Gain/Loss %',
-                                    'Dividend', 'Div Yield', 'Div Annual', 'Div Yield Cost', 
-                                    'Div Ex-Date', 'Div Pay-Date', 'Div Freq']),
-                            fill_color='paleturquoise',
-                            font=dict(color='black', family='Arial, sans-serif', size=10),
-                            align='center'),
-                    cells=dict(values=[df1.Account, df1.Ticker, df1.Company, df1.BuyDate, df1.Shares, df1.ShareCost,
-                                    df1.StopLoss, df1.StopLossPerc, df1.Today, df1.TodayPerc, 
-                                    df1.TotalValue, df1.TotalCost, df1.GainLoss, df1.GainLossPerc,
-                                    df1.Dividend, df1.DivYield, df1.DivAnnual, df1.DivYieldCost, 
-                                    df1.ExDivDate, df1.DivPayDate, df1.DivFreq],
-                            fill_color='lavender',
-                            font_color=font_color,
-                            height=25,
-                            font=dict(size=11),
-                            align = ['left', 'left', 'left', 'center', 'center', 'right']
-                        )
-                    )
-                ])
-                fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1450,height=800)
-                st.write(fig)
+                style_negative = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('-')) {return {'color': 'red'}} 
+                        else {return {'color': 'green'}}
+                    };
+                    """
+                )
+                gb = GridOptionsBuilder.from_dataframe(df1)
+                gb.configure_default_column(groupable=True, 
+                                                value=True, 
+                                                enableRowGroup=True, 
+                                                editable=True,
+                                                enableRangeSelection=True,
+                                            )
+                gb.configure_column("Account", maxWidth=80)
+                gb.configure_column("Ticker", maxWidth=80)
+                gb.configure_column("Company", maxWidth=200)
+                gb.configure_column("Shares", maxWidth=81)
+                gb.configure_column("Cost", maxWidth=85)
+                gb.configure_column("Stop%", maxWidth=80)
+                gb.configure_column("Today", maxWidth=85)
+                gb.configure_column("Value", maxWidth=100)
+                gb.configure_column("TotalCost", maxWidth=100)
+                gb.configure_column("Today%", cellStyle=style_negative, maxWidth=88)
+                gb.configure_column("Gain", cellStyle=style_negative, maxWidth=90)
+                gb.configure_column("Gain%", cellStyle=style_negative, maxWidth=85)
+                gb.configure_column("Yield", maxWidth=90)
+                if xOption == 'Detail':
+                    gb.configure_column("Date", maxWidth=85)
+                    gb.configure_column("Stop", maxWidth=75)
+                    gb.configure_column("DivRate", maxWidth=90)
+                    gb.configure_column("YieldCost", maxWidth=97)
+                    gb.configure_column("Annual", maxWidth=90)
+                    gb.configure_column("Ex-Date", maxWidth=90)
+                    gb.configure_column("PayDate", maxWidth=90)
+                    gb.configure_column("Freq", maxWidth=70)
+ 
+                gridOptions = gb.build()
+                data = AgGrid(
+                    df1,
+                    gridOptions=gridOptions,
+                    height=850,
+                    width='100%',
+                    theme='light',     # valid themes: 'streamlit', 'light', 'dark', 'blue', 'fresh', 'material'
+                    # defaultWidth=25,
+                    # fit_columns_on_grid_load=True, 
+                    enable_enterprise_modules=True,
+                    allow_unsafe_jscode=True
+                )
+
+
+
+
+            #------------       Using Plotly Tables - Replaced with Above Ag-Grid      --------------
+            # if xOption == 'Summary':
+            #     font_color = ['black'] * 6 + \
+            #         [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
+            #         ['black'], ['black'],
+            #         ['red' if  boolv else 'green' for boolv in df1['GainLoss'].str.contains('-')],
+            #         ['red' if  boolv else 'green' for boolv in df1['GainLossPerc'].str.contains('-')],
+            #         ['black']]
+            #     fig = go.Figure(data=[go.Table(
+            #         columnwidth=[1.1,1,3.5,1,1.4,1.3,1.1,1.4,1.4,1.3,1.2,1.2],
+            #         header=dict(values=list(['Account', 'Symbol', 'Company',  'Shares', 'Cost/Share', 
+            #                         'Today', 'Today %', 'Total Value', 'Total Cost', 
+            #                         'Gain/Loss', 'Gain/Loss %', 'Div Yield']),
+            #                 fill_color='paleturquoise',
+            #                 font=dict(color='black', family='Arial, sans-serif', size=10),
+            #                 align='center'),
+            #         cells=dict(values=[df1.Account, df1.Ticker, df1.Company, df1.Shares, df1.ShareCost,
+            #                         df1.Today, df1.TodayPerc, df1.TotalValue, df1.TotalCost, 
+            #                         df1.GainLoss, df1.GainLossPerc, df1.DivYield],
+            #                 fill_color='lavender',
+            #                 font_color=font_color,
+            #                 height=25,
+            #                 font=dict(size=11),
+            #                 align = ['left', 'left', 'left', 'center', 'center', 'right']
+            #             )
+            #         )
+            #     ])
+            #     fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=900,height=800)
+            #     st.write(fig)
+
+            # #-------------------------  DETAIL  --------------------------
+            # elif xOption == 'Detail':
+            #     font_color = ['black'] * 9 + \
+            #         [['red' if  boolv else 'green' for boolv in df1['TodayPerc'].str.contains('-')],
+            #         ['black'], ['black'],
+            #         ['red' if  boolv else 'green' for boolv in df1['GainLoss'].str.contains('-')],
+            #         ['red' if  boolv else 'green' for boolv in df1['GainLossPerc'].str.contains('-')],
+            #         ['black']]
+
+            #     fig = go.Figure(data=[go.Table(
+            #         columnwidth=[1.1,1,3.5,1.3,1,1.4,1.4,1.1,1.3,1.1,1.7,1.7,1.5,1.2,1.1,1,1.3,1.2,1.5,1.5,0.7],
+            #         header=dict(values=list(['Account', 'Symbol', 'Company',  'Buy Date', 'Shares', 'Cost/Share', 
+            #                         'Stop/Loss', 'Stop/Loss %', 'Today', 'Today %', 
+            #                         'Total Value', 'Total Cost', 'Gain/Loss', 'Gain/Loss %',
+            #                         'Dividend', 'Div Yield', 'Div Annual', 'Div Yield Cost', 
+            #                         'Div Ex-Date', 'Div Pay-Date', 'Div Freq']),
+            #                 fill_color='paleturquoise',
+            #                 font=dict(color='black', family='Arial, sans-serif', size=10),
+            #                 align='center'),
+            #         cells=dict(values=[df1.Account, df1.Ticker, df1.Company, df1.BuyDate, df1.Shares, df1.ShareCost,
+            #                         df1.StopLoss, df1.StopLossPerc, df1.Today, df1.TodayPerc, 
+            #                         df1.TotalValue, df1.TotalCost, df1.GainLoss, df1.GainLossPerc,
+            #                         df1.Dividend, df1.DivYield, df1.DivAnnual, df1.DivYieldCost, 
+            #                         df1.ExDivDate, df1.DivPayDate, df1.DivFreq],
+            #                 fill_color='lavender',
+            #                 font_color=font_color,
+            #                 height=25,
+            #                 font=dict(size=11),
+            #                 align = ['left', 'left', 'left', 'center', 'center', 'right']
+            #             )
+            #         )
+            #     ])
+            #     fig.update_layout(margin=dict(l=0,r=0,b=5,t=5), width=1450,height=800)
+            #     st.write(fig)
 
             #-------------------------  NEW TRANSACTION  --------------------------
             elif xOption == 'New Transaction':
