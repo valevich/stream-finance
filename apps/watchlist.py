@@ -799,7 +799,8 @@ def app():
         with st.spinner('Loading Data...Please Wait...'):
 
             if is_prod:
-                gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
+                # gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
+                gc = gspread.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
             else:    
                 gc = gspread.service_account(filename='client_secret.json')
 
