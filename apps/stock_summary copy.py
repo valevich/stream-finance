@@ -17,9 +17,6 @@ import pygsheets
 from google.oauth2 import service_account
 from gspread_pandas import Spread, Client
 # from gsheetsdb import connect
-import gspread      #TESTING
-from oauth2client.service_account import ServiceAccountCredentials  #TESTING
-
 
 from apps.stock_scrape1 import getData_Zacks
 from apps.stock_scrape1 import getData_Dividata
@@ -289,20 +286,14 @@ def app():
             if is_prod:
                 gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
             else:    
-                # gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-                gc = gspread.service_account(filename='client_secret.json') #TESTING
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
-            gsheet = gc.open('Research')
-            wks = gsheet.worksheet(xPortfolio)
-            
-            # wks = sheet.worksheet_by_title(xPortfolio)
-            # df1 = wks.get_as_df()
-
-            df1 = pd.DataFrame(wks.get_all_records())
+            sheet = gc.open('Research')
+            wks = sheet.worksheet_by_title(xPortfolio)
+            df1 = wks.get_as_df()
 
             if xPortfolio == 'Analysts':
                 xAnalysts = df1['Source'].unique().tolist()
-                xAnalysts.sort()
                 xAnalysts.insert(0,'<New>')
                 xAnalyst = st.sidebar.selectbox('Select Analyst:', xAnalysts)
                 name = ''
@@ -355,8 +346,8 @@ def app():
                     else:
                         values = [[symbol, None, xTradeDate, '1', price, None, None, None, xDividend, xDivExDate, xDivPayDate, xDivFreq]]
 
-                    # wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-                    gsheet.values_append(xPortfolio, {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+                    wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
+
                     st.sidebar.write("Saved to: ", xPortfolio)
 
 

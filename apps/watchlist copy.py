@@ -13,8 +13,6 @@ import time
 from st_aggrid import AgGrid                                 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import JsCode
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 
 
 def app():
@@ -338,7 +336,6 @@ def app():
 
             #------------   CALCULATE EACH ACCOUNT TOTALS  --------------
             xAccount = df1['Account'].unique().tolist()
-            xAccount.sort()
             xAccount.insert(0,'All')
             xAccountChoice = st.sidebar.selectbox('Select Account:', xAccount)
             st.title('Portfolio: ' + xAccountChoice)
@@ -489,7 +486,6 @@ def app():
                 with col2:
                     if xAction == 'Sell' or xAction == 'Buy':
                         xAccount = df1['Account'].unique().tolist()
-                        xAccount.sort()
                         xAccount.insert(0,'')
                         xAccountChoice = st.selectbox('Select Account:', xAccount)
                 with col3:
@@ -498,7 +494,6 @@ def app():
                             df_tick = df1[df1['Ticker']!='CASH']
                             df_tick = df_tick.loc[(df_tick['Account'] == xAccountChoice)]
                             xTicker = df_tick['Ticker'].unique().tolist()
-                            xAccount.sort()
                             xTicker.insert(0,'')
                             xTickerChoice = st.selectbox('Select Ticker:', xTicker)
                     elif xAction == 'Buy':
@@ -743,57 +738,6 @@ def app():
 
 
     #------------------------ SAVE TRANSACTION TO GOOGLE SHEETS -----------------------#
-    # def process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, xDivExDate, xDivPayDate, xDivFreq, xDivAmount):
-
-    #     with st.spinner('Loading Data...Please Wait...'):
-
-    #         if is_prod:
-    #             gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
-    #         else:    
-    #             gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-
-    #         sheet = gc.open('Research')
-
-    #         if xAction == 'Sell':
-    #             #------- Add Sale Transaction to Transactions Sheet ----------
-    #             wks = sheet.worksheet_by_title('Transactions')
-    #             values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Update Portfolio CASH Balance ----------
-    #             wks = sheet.worksheet_by_title('Portfolio')
-    #             for idx, row in enumerate(wks):
-    #                 if (wks[idx+1][0]) == xAccountChoice:
-    #                     xAmt = float(xTransPrice) * float(xShares)
-    #                     if (wks[idx+1][1]) == xTickerChoice:
-    #                         wks.delete_rows(idx+1, number=1)
-    #                     elif (wks[idx+1][1]) == 'CASH':
-    #                         xTot = wks[idx+1][10]
-    #                         xTot = xTot.replace('$','')
-    #                         xTot = float(xTot.replace(',',''))
-    #                         wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
-
-    #         if xAction == 'Buy':
-    #             #------- Add Sale Record to Transactions Sheet ----------
-    #             wks = sheet.worksheet_by_title('Transactions')
-    #             values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Add Buy Record to Portfolio Sheet ----------
-    #             wks = sheet.worksheet_by_title('Portfolio')
-    #             values = [[xAccountChoice, xTickerChoice, None, str(xTransDate), xShares, xTransPrice, None, None, None, None, None, None, None, None, xDivAmount, None, None, None, xDivExDate, xDivPayDate, xDivFreq]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Update Portfolio CASH Balance ----------
-    #             for idx, row in enumerate(wks):
-    #                 if (wks[idx+1][0]) == xAccountChoice:
-    #                     xAmt = float(xTransPrice) * float(xShares)
-    #                     if (wks[idx+1][1]) == 'CASH':
-    #                         xTot = wks[idx+1][10]
-    #                         xTot = xTot.replace('$','')
-    #                         xTot = float(xTot.replace(',',''))
-    #                         wks.cell('K'+str(idx+1)).value = str(xTot - xAmt)
-
-    #         st.write('Transaction Processed!')
-
-                
     def process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, xDivExDate, xDivPayDate, xDivFreq, xDivAmount):
 
         with st.spinner('Loading Data...Please Wait...'):
@@ -801,47 +745,47 @@ def app():
             if is_prod:
                 gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
             else:    
-                gc = gspread.service_account(filename='client_secret.json')
+                gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
 
-            gsheet = gc.open('Research')
+            sheet = gc.open('Research')
 
             if xAction == 'Sell':
                 #------- Add Sale Transaction to Transactions Sheet ----------
+                wks = sheet.worksheet_by_title('Transactions')
                 values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-                gsheet.values_append('Transactions', {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
                 #------- Update Portfolio CASH Balance ----------
-                wks = gsheet.worksheet('Portfolio')
-                wksList = wks.get_all_values()
-                for idx, row in enumerate(wksList):
-                    if (wksList[idx][0]) == xAccountChoice:
+                wks = sheet.worksheet_by_title('Portfolio')
+                for idx, row in enumerate(wks):
+                    if (wks[idx+1][0]) == xAccountChoice:
                         xAmt = float(xTransPrice) * float(xShares)
-                        if (wksList[idx][1]) == xTickerChoice:
-                            wks.delete_row(idx+1)
-                        elif (wksList[idx][1]) == 'CASH':
-                            xTot = wksList[idx][10]
+                        if (wks[idx+1][1]) == xTickerChoice:
+                            wks.delete_rows(idx+1, number=1)
+                        elif (wks[idx+1][1]) == 'CASH':
+                            xTot = wks[idx+1][10]
                             xTot = xTot.replace('$','')
                             xTot = float(xTot.replace(',',''))
-                            wks.update_cell(idx+1, 11, str(xTot + xAmt))
+                            wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
 
 
             if xAction == 'Buy':
                 #------- Add Sale Record to Transactions Sheet ----------
+                wks = sheet.worksheet_by_title('Transactions')
                 values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-                gsheet.values_append('Transactions', {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
                 #------- Add Buy Record to Portfolio Sheet ----------
+                wks = sheet.worksheet_by_title('Portfolio')
                 values = [[xAccountChoice, xTickerChoice, None, str(xTransDate), xShares, xTransPrice, None, None, None, None, None, None, None, None, xDivAmount, None, None, None, xDivExDate, xDivPayDate, xDivFreq]]
-                gsheet.values_append('Portfolio', {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+                wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
                 #------- Update Portfolio CASH Balance ----------
-                wks = gsheet.worksheet('Portfolio')
-                wksList = wks.get_all_values()
-                for idx, row in enumerate(wksList):
-                    if (wksList[idx][0]) == xAccountChoice:
+                for idx, row in enumerate(wks):
+                    if (wks[idx+1][0]) == xAccountChoice:
                         xAmt = float(xTransPrice) * float(xShares)
-                        if (wksList[idx][1]) == 'CASH':
-                            xTot = wksList[idx][10]
+                        if (wks[idx+1][1]) == 'CASH':
+                            xTot = wks[idx+1][10]
                             xTot = xTot.replace('$','')
                             xTot = float(xTot.replace(',',''))
-                            wks.update_cell(idx+1, 11, str(xTot - xAmt))
+                            wks.cell('K'+str(idx+1)).value = str(xTot - xAmt)
 
             st.write('Transaction Processed!')
                 
@@ -866,7 +810,7 @@ def app():
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 
         pwd = st.sidebar.empty()
-        t = pwd.text_input("Enter Password", type="password")
+        t = pwd.text_input("Enter Password")
         if t != "":
             if t == 'nella1':
                 pwd.empty()
