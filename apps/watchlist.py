@@ -801,8 +801,8 @@ def app():
             if is_prod:
                 # gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
                 var = os.getenv('GDRIVE_API_CREDENTIALS')
-                print (var)
-                print (str(var))
+                st.write (var)
+                st.write (str(var))
                 gc = gspread.service_account_from_dict(str(var))
             else:    
                 gc = gspread.service_account(filename='client_secret.json')
