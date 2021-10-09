@@ -717,8 +717,30 @@ def app():
                     allow_unsafe_jscode=True
                 )
 
-                if st.sidebar.button ('Update Ex-Dividend/Pay Dates'):
-                    st.write ('test')
+                if st.sidebar.button ('Update Dates'):
+                    if is_prod:
+                        credentials = eval(os.getenv('GDRIVE_API_CREDENTIALS'))
+                        gc = gspread.service_account_from_dict(credentials)
+                    else:    
+                        gc = gspread.service_account(filename='client_secret.json')
+
+                    #------- Update Portfolio Ex-Dividend/Pay Dates ----------
+                    gsheet = gc.open('Research')
+                    wks = gsheet.worksheet('Portfolio')
+
+                    wksList = wks.get_all_values()
+                    for idx, row in enumerate(wksList):
+                        if len((wksList[idx][14])) > 0:
+                            xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
+                            xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                            # if (wksList[idx][1]) == 'NRZ':
+                            wks.update_cell(idx+1, 15, str(xDivAmount))
+                            wks.update_cell(idx+1, 19, str(xDivExDate))
+                            wks.update_cell(idx+1, 20, str(xDivPayDate))
+                            wks.update_cell(idx+1, 21, str(xDivFreq))
+
+                    st.sidebar.write ('Updated!')
+
 
 
 
