@@ -222,7 +222,7 @@ def app():
 
             if st.sidebar.checkbox("Show Analyst Rankings"):
                 st.title('Analyst Rankings')
-                df0 = load_gsheet('AnalystsRankings')
+                df0 = load_gsheet('Rankings')
 
                 style_AvgReturn = JsCode(
                     """
@@ -400,7 +400,7 @@ def app():
             st.write ('\n')
 
 
-            xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction','Held Stocks')) 
+            xOption = st.sidebar.radio("Select Option", ('Summary','Detail','New Transaction','Held Stocks','Dividends')) 
 
             #-------------------------  PORTFOLIO SUMMARY OR DETAIL VIEW --------------------------
             if xOption == 'Summary' or xOption == 'Detail':
@@ -453,6 +453,7 @@ def app():
                 gb.configure_column("Gain", cellStyle=style_negative, maxWidth=90)
                 gb.configure_column("Gain%", cellStyle=style_negative, maxWidth=85)
                 gb.configure_column("Yield", maxWidth=90)
+
                 if xOption == 'Detail':
                     gb.configure_column("Date", maxWidth=85)
                     gb.configure_column("Stop", maxWidth=75)
@@ -569,7 +570,6 @@ def app():
                                 if xTransPrice > 0:
                                     if xShares > 0:
                                         if st.button ('Submit'):
-     
                                             if ticker.info['quoteType'] == 'EQUITY':
                                                 price = ticker.info['currentPrice']
                                                 xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
@@ -658,6 +658,68 @@ def app():
                     enable_enterprise_modules=True,
                     allow_unsafe_jscode=True
                 )
+
+            #-------------------------  DIVIDENDS --------------------------
+            elif xOption == 'Dividends':
+
+                df1.rename(columns = {
+                        'TodayPerc':'Today%',
+                        'TotalValue':'Value',
+                        'DivYield':'Yield',
+                        'Dividend':'DivRate',
+                        'DivAnnual':'Annual',
+                        'DivYieldCost':'YieldCost',
+                        'ExDivDate':'Ex-Date',
+                        'DivPayDate':'PayDate',
+                        'DivFreq':'Freq'},
+                            inplace=True)
+
+                df1 = df1[df1.Ticker != 'CASH']
+                df1.drop(df1.columns[[0,3,4,5,6,7,8,11,12,13]], axis = 1, inplace = True)
+
+                style_negative = JsCode(
+                    """
+                    function(params) {
+                        if (params.value.includes('-')) {return {'color': 'red'}} 
+                        else {return {'color': 'green'}}
+                    };
+                    """
+                )
+                gb = GridOptionsBuilder.from_dataframe(df1)
+                gb.configure_default_column(groupable=True, 
+                                                value=True, 
+                                                enableRowGroup=True, 
+                                                editable=True,
+                                                enableRangeSelection=True,
+                                            )
+                gb.configure_column("Ticker", maxWidth=80)
+                gb.configure_column("Company", maxWidth=200)
+                gb.configure_column("Value", maxWidth=100)
+                gb.configure_column("Today%", cellStyle=style_negative, maxWidth=88)
+                gb.configure_column("Yield", maxWidth=90)
+                gb.configure_column("DivRate", maxWidth=90)
+                gb.configure_column("YieldCost", maxWidth=97)
+                gb.configure_column("Annual", maxWidth=90)
+                gb.configure_column("Ex-Date", maxWidth=90)
+                gb.configure_column("PayDate", maxWidth=90)
+                gb.configure_column("Freq", maxWidth=70)
+ 
+                gridOptions = gb.build()
+                data = AgGrid(
+                    df1,
+                    gridOptions=gridOptions,
+                    height=850,
+                    width='100%',
+                    theme='light',     # valid themes: 'streamlit', 'light', 'dark', 'blue', 'fresh', 'material'
+                    # defaultWidth=25,
+                    # fit_columns_on_grid_load=True, 
+                    enable_enterprise_modules=True,
+                    allow_unsafe_jscode=True
+                )
+
+                if st.sidebar.button ('Update Ex-Dividend/Pay Dates'):
+                    st.write ('test')
+
 
 
 
