@@ -730,14 +730,15 @@ def app():
 
                     wksList = wks.get_all_values()
                     for idx, row in enumerate(wksList):
-                        if len((wksList[idx][14])) > 0:
-                            xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
-                            xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
-                            # if (wksList[idx][1]) == 'NRZ':
-                            wks.update_cell(idx+1, 15, str(xDivAmount))
-                            wks.update_cell(idx+1, 19, str(xDivExDate))
-                            wks.update_cell(idx+1, 20, str(xDivPayDate))
-                            wks.update_cell(idx+1, 21, str(xDivFreq))
+                        if idx > 1:
+                            if len((wksList[idx][14])) > 0:
+                                xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
+                                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                                # if (wksList[idx][1]) == 'NRZ':
+                                wks.update_cell(idx+1, 15, str(xDivAmount))
+                                wks.update_cell(idx+1, 19, str(xDivExDate))
+                                wks.update_cell(idx+1, 20, str(xDivPayDate))
+                                wks.update_cell(idx+1, 21, str(xDivFreq))
 
                     st.sidebar.write ('Updated!')
 
