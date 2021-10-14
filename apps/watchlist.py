@@ -971,7 +971,7 @@ def app():
         t = pwd.text_input("Enter Password", type="password")
         if t != "":
             if is_prod:
-                xPassw = eval(os.getenv('MY_PASSW'))
+                xPassw = os.getenv('MY_PASSW')
             else:    
                 file = open("mypassw.txt")
                 xPassw = file.readline()
