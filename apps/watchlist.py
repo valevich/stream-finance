@@ -663,10 +663,9 @@ def app():
             elif xOption == 'Dividends':
 
                 df1.rename(columns = {
-                        'TodayPerc':'Today%',
                         'TotalValue':'Value',
                         'DivYield':'Yield',
-                        'Dividend':'DivRate',
+                        'Dividend':'Rate',
                         'DivAnnual':'Annual',
                         'DivYieldCost':'YieldCost',
                         'ExDivDate':'Ex-Date',
@@ -675,16 +674,58 @@ def app():
                             inplace=True)
 
                 df1 = df1[df1.Ticker != 'CASH']
-                df1.drop(df1.columns[[0,3,4,5,6,7,8,11,12,13]], axis = 1, inplace = True)
+                df1 = df1[df1.Rate != '']
+                df1.drop(df1.columns[[0,3,4,5,6,7,8,9,11,12,13]], axis = 1, inplace = True)
 
-                style_negative = JsCode(
-                    """
-                    function(params) {
-                        if (params.value.includes('-')) {return {'color': 'red'}} 
-                        else {return {'color': 'green'}}
-                    };
-                    """
-                )
+                # reorder dataframe
+                df1 = df1.T.reindex(['Ticker','Company','Value','Rate','Annual','Yield','YieldCost','Ex-Date','PayDate','Freq']).T
+
+
+                if st.sidebar.button ('Update Dates'):
+                    if is_prod:
+                        credentials = eval(os.getenv('GDRIVE_API_CREDENTIALS'))
+                        gc = gspread.service_account_from_dict(credentials)
+                    else:    
+                        gc = gspread.service_account(filename='client_secret.json')
+
+                    #------- Update Portfolio Ex-Dividend/Pay Dates ----------
+                    gsheet = gc.open('Research')
+                    wks = gsheet.worksheet('Portfolio')
+
+                    wksList = wks.get_all_values()
+                    for idx, row in enumerate(wksList):
+                        if idx > 1:
+                            # if len((wksList[idx][14])) > 0:
+                            #     xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
+                            #     xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                            #     wks.update_cell(idx+1, 15, str(xDivAmount))
+                            #     wks.update_cell(idx+1, 19, str(xDivExDate))
+                            #     wks.update_cell(idx+1, 20, str(xDivPayDate))
+                            #     wks.update_cell(idx+1, 21, str(xDivFreq))
+
+                            if len((wksList[idx][14])) > 0:
+                                xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
+                                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                                
+                                if wksList[idx][14] != '$' + str(xDivAmount):
+                                    st.write (wksList[idx][1] + ' (DivAmount): ' + wksList[idx][14] + ' <---> ' + str(xDivAmount))
+ 
+                                if wksList[idx][18] != xDivExDate:
+                                    st.write (wksList[idx][1] + ' (DivExDate): ' + wksList[idx][18] + ' <---> ' + str(xDivExDate))
+
+                                if wksList[idx][19] != xDivPayDate:
+                                    st.write (wksList[idx][1] + ' (DivPayDate): ' + wksList[idx][19] + ' <---> ' + str(xDivPayDate))
+
+                                if wksList[idx][20] != xDivFreq:
+                                    st.write (wksList[idx][1] + ' (DivFreq): ' + wksList[idx][20] + ' <---> ' + str(xDivFreq))
+
+
+
+                    st.sidebar.write ('Updated!')
+
+
+
+
                 gb = GridOptionsBuilder.from_dataframe(df1)
                 gb.configure_default_column(groupable=True, 
                                                 value=True, 
@@ -692,12 +733,11 @@ def app():
                                                 editable=True,
                                                 enableRangeSelection=True,
                                             )
-                gb.configure_column("Ticker", maxWidth=80)
+                gb.configure_column("Ticker", maxWidth=70)
                 gb.configure_column("Company", maxWidth=200)
                 gb.configure_column("Value", maxWidth=100)
-                gb.configure_column("Today%", cellStyle=style_negative, maxWidth=88)
-                gb.configure_column("Yield", maxWidth=90)
-                gb.configure_column("DivRate", maxWidth=90)
+                gb.configure_column("Yield", maxWidth=85)
+                gb.configure_column("Rate", maxWidth=75)
                 gb.configure_column("YieldCost", maxWidth=97)
                 gb.configure_column("Annual", maxWidth=90)
                 gb.configure_column("Ex-Date", maxWidth=90)
@@ -717,30 +757,6 @@ def app():
                     allow_unsafe_jscode=True
                 )
 
-                if st.sidebar.button ('Update Dates'):
-                    if is_prod:
-                        credentials = eval(os.getenv('GDRIVE_API_CREDENTIALS'))
-                        gc = gspread.service_account_from_dict(credentials)
-                    else:    
-                        gc = gspread.service_account(filename='client_secret.json')
-
-                    #------- Update Portfolio Ex-Dividend/Pay Dates ----------
-                    gsheet = gc.open('Research')
-                    wks = gsheet.worksheet('Portfolio')
-
-                    wksList = wks.get_all_values()
-                    for idx, row in enumerate(wksList):
-                        if idx > 1:
-                            if len((wksList[idx][14])) > 0:
-                                xDivList = getData_MarketWatchDividends(wksList[idx][1])  # GET DIV PAY DATE, ETC
-                                xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
-                                # if (wksList[idx][1]) == 'NRZ':
-                                wks.update_cell(idx+1, 15, str(xDivAmount))
-                                wks.update_cell(idx+1, 19, str(xDivExDate))
-                                wks.update_cell(idx+1, 20, str(xDivPayDate))
-                                wks.update_cell(idx+1, 21, str(xDivFreq))
-
-                    st.sidebar.write ('Updated!')
 
 
 
@@ -954,7 +970,13 @@ def app():
         pwd = st.sidebar.empty()
         t = pwd.text_input("Enter Password", type="password")
         if t != "":
-            if t == 'nella1':
+            if is_prod:
+                xPassw = eval(os.getenv('MY_PASSW'))
+            else:    
+                file = open("mypassw.txt")
+                xPassw = file.readline()
+                file.close()
+            if t == xPassw:
                 pwd.empty()
                 display_portfolio (xSelection)
 
