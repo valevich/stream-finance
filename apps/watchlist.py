@@ -119,7 +119,7 @@ def app():
             else:    
                 gc = pygsheets.authorize(service_file='client_secret.json') # using local account credentials
 
-            sheet = gc.open('Research')
+            sheet = gc.open('My Portfolio')
             wks = sheet.worksheet_by_title(gsheet)
             df = wks.get_as_df()
 
@@ -662,13 +662,65 @@ def app():
             #-------------------------  DIVIDENDS --------------------------
             elif xOption == 'Dividends':
 
+                # Calculate Totals
+                df2 = df1
+                df2['TotalCost'] = df2['TotalCost'].str.replace('$','')
+                df2['TotalCost'] = df2['TotalCost'].str.replace(',','')
+                df2['TotalValue'] = df2['TotalValue'].str.replace('$','')
+                df2['TotalValue'] = df2['TotalValue'].str.replace(',','')
+                df2['DivAnnual'] = df2['DivAnnual'].str.replace('$','')
+                df2['DivAnnual'] = df2['DivAnnual'].str.replace(',','')
+                df2[["TotalCost","TotalValue","DivAnnual"]] = df2[["TotalCost","TotalValue","DivAnnual"]].apply(pd.to_numeric)
+
+                xTotalValue = df2.loc[:, 'TotalValue'].sum()
+                xTotalCost = df2.loc[:, 'TotalCost'].sum()
+                xTotalDivAnnual = df2.loc[:, 'DivAnnual'].sum()
+                xTotalDivYield = (xTotalDivAnnual / xTotalValue) * 100
+                xTotalDivYieldCost = (xTotalDivAnnual / xTotalCost) * 100
+
+                xTotalValue = '$' + str("{:,.2f}".format(xTotalValue))
+                xTotalCost = '$' + str("{:,.2f}".format(xTotalCost))
+                xTotalDivAnnual = '$' + str("{:,.2f}".format(xTotalDivAnnual))
+                xTotalDivYield = str("{:,.2f}".format(xTotalDivYield)) + '%'
+                xTotalDivYieldCost = str("{:,.2f}".format(xTotalDivYieldCost)) + '%'
+
+                col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
+                #---------------  Dow  -------------------
+                with col1:
+                    row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Total Value</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalValue}</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                with col2:
+                    row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Total Cost</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalCost}</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                with col3:
+                    row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Annual Income</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalDivAnnual}</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                with col4:
+                    row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Dividend Yield</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalDivYield}</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                with col5:
+                    row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Yield on Cost</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+                    row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalDivYieldCost}</b></p>'
+                    st.markdown(row, unsafe_allow_html=True)
+
+
+
                 df1.rename(columns = {
                         'TotalValue':'Value',
                         'DivYield':'Yield',
                         'Dividend':'Rate',
                         'DivAnnual':'Annual',
                         'DivYieldCost':'YieldCost',
-                        'ExDivDate':'Ex-Date',
+                        'ExDivDate':'ExDate',
                         'DivPayDate':'PayDate',
                         'DivFreq':'Freq'},
                             inplace=True)
@@ -676,9 +728,14 @@ def app():
                 df1 = df1[df1.Ticker != 'CASH']
                 df1 = df1[df1.Rate != '']
                 df1.drop(df1.columns[[0,3,4,5,6,7,8,9,11,12,13]], axis = 1, inplace = True)
+                df1['ExDate'] = pd.to_datetime(df1.ExDate)                #Reformat to Date type
+                df1['ExDate'] = df1['ExDate'].dt.strftime('%Y/%m/%d')     #Reformat Date format
+                df1['PayDate'] = pd.to_datetime(df1.PayDate)                #Reformat to Date type
+                df1['PayDate'] = df1['PayDate'].dt.strftime('%Y/%m/%d')     #Reformat Date format
 
                 # reorder dataframe
-                df1 = df1.T.reindex(['Ticker','Company','Value','Rate','Annual','Yield','YieldCost','Ex-Date','PayDate','Freq']).T
+                df1 = df1.T.reindex(['Ticker','Company','Value','Rate','Annual','Yield','YieldCost','ExDate','PayDate','Freq']).T
+
 
 
                 if st.sidebar.button ('Update Dates'):
@@ -689,7 +746,7 @@ def app():
                         gc = gspread.service_account(filename='client_secret.json')
 
                     #------- Update Portfolio Ex-Dividend/Pay Dates ----------
-                    gsheet = gc.open('Research')
+                    gsheet = gc.open('My Portfolio')
                     wks = gsheet.worksheet('Portfolio')
 
                     wksList = wks.get_all_values()
@@ -719,10 +776,7 @@ def app():
                                 if wksList[idx][20] != xDivFreq:
                                     st.write (wksList[idx][1] + ' (DivFreq): ' + wksList[idx][20] + ' <---> ' + str(xDivFreq))
 
-
-
                     st.sidebar.write ('Updated!')
-
 
 
 
@@ -740,7 +794,7 @@ def app():
                 gb.configure_column("Rate", maxWidth=75)
                 gb.configure_column("YieldCost", maxWidth=97)
                 gb.configure_column("Annual", maxWidth=90)
-                gb.configure_column("Ex-Date", maxWidth=90)
+                gb.configure_column("ExDate", maxWidth=90)
                 gb.configure_column("PayDate", maxWidth=90)
                 gb.configure_column("Freq", maxWidth=70)
  
@@ -905,7 +959,7 @@ def app():
             else:    
                 gc = gspread.service_account(filename='client_secret.json')
 
-            gsheet = gc.open('Research')
+            gsheet = gc.open('My Portfolio')
 
             if xAction == 'Sell':
                 #------- Add Sale Transaction to Transactions Sheet ----------
@@ -954,7 +1008,7 @@ def app():
     #------------------  MAIN  -----------------------------
     display_header()
 
-    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'ETFs', 'ToBuy', 'Analysts', 'Portfolio')) 
+    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'ETFs', 'Analysts', 'Portfolio')) 
 
     if xSelection == 'Watchlist':
         display_gsheet (xSelection)
@@ -962,8 +1016,8 @@ def app():
         display_gsheet (xSelection)
     elif xSelection == 'ETFs': 
         display_gsheet (xSelection)
-    elif xSelection == 'ToBuy': 
-        display_gsheet (xSelection)
+    # elif xSelection == 'Misc': 
+    #     display_gsheet (xSelection)
     elif xSelection == 'Analysts': 
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 

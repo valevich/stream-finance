@@ -283,7 +283,7 @@ def app():
 
             xError = '0'
             xPortfolio = st.sidebar.selectbox("Select Portfolio",
-                                ['Watchlist', 'Dividends', 'ETFs', 'ToBuy', 'Analysts'])
+                                ['Watchlist', 'Dividends', 'ETFs', 'Misc', 'Analysts'])
 
             if is_prod:
                 credentials = eval(os.getenv('GDRIVE_API_CREDENTIALS'))
@@ -291,7 +291,7 @@ def app():
             else:    
                 gc = gspread.service_account(filename='client_secret.json')
 
-            gsheet = gc.open('Research')
+            gsheet = gc.open('My Portfolio')
             wks = gsheet.worksheet(xPortfolio)
             
             df1 = pd.DataFrame(wks.get_all_records())
