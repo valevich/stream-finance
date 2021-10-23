@@ -499,7 +499,7 @@ def app():
                             df_tick = df1[df1['Ticker']!='CASH']
                             df_tick = df_tick.loc[(df_tick['Account'] == xAccountChoice)]
                             xTicker = df_tick['Ticker'].unique().tolist()
-                            xAccount.sort()
+                            xTicker.sort()
                             xTicker.insert(0,'')
                             xTickerChoice = st.selectbox('Select Ticker:', xTicker)
                     elif xAction == 'Buy':
@@ -1008,16 +1008,14 @@ def app():
     #------------------  MAIN  -----------------------------
     display_header()
 
-    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'ETFs', 'Analysts', 'Portfolio')) 
+    xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'Misc', 'Analysts', 'Portfolio')) 
 
     if xSelection == 'Watchlist':
         display_gsheet (xSelection)
     elif xSelection == 'Dividends': 
         display_gsheet (xSelection)
-    elif xSelection == 'ETFs': 
+    elif xSelection == 'Misc': 
         display_gsheet (xSelection)
-    # elif xSelection == 'Misc': 
-    #     display_gsheet (xSelection)
     elif xSelection == 'Analysts': 
         display_analysts (xSelection)
     elif xSelection == 'Portfolio': 

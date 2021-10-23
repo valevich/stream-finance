@@ -283,7 +283,7 @@ def app():
 
             xError = '0'
             xPortfolio = st.sidebar.selectbox("Select Portfolio",
-                                ['Watchlist', 'Dividends', 'ETFs', 'Misc', 'Analysts'])
+                                ['Watchlist', 'Dividends', 'Misc', 'Analysts'])
 
             if is_prod:
                 credentials = eval(os.getenv('GDRIVE_API_CREDENTIALS'))
