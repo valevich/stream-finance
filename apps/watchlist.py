@@ -684,8 +684,16 @@ def app():
                 xTotalDivYield = str("{:,.2f}".format(xTotalDivYield)) + '%'
                 xTotalDivYieldCost = str("{:,.2f}".format(xTotalDivYieldCost)) + '%'
 
+                st.write('\n')
+
+
+                #---------------  Test  -------------------
+                # c1, c2, c3 = st.columns(3)
+                # c1.metric('Total Value', xTotalValue, xTotalDivYield)
+                # c2.metric('Total Value', xTotalValue, xTotalDivYield)
+
+
                 col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
-                #---------------  Dow  -------------------
                 with col1:
                     row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Total Value</b></p>'
                     st.markdown(row, unsafe_allow_html=True)
@@ -712,6 +720,8 @@ def app():
                     row = f'<p style="font-family:sans-serif; float: left;line-height: 16px; font-size: 18px;"><b>{xTotalDivYieldCost}</b></p>'
                     st.markdown(row, unsafe_allow_html=True)
 
+                st.write('\n')
+                st.write('\n')
 
 
                 df1.rename(columns = {
@@ -810,10 +820,6 @@ def app():
                     enable_enterprise_modules=True,
                     allow_unsafe_jscode=True
                 )
-
-
-
-
 
 
 

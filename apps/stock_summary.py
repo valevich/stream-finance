@@ -93,21 +93,24 @@ def app():
                 xColor = 'red'
 
             # ------  Current Price Row 1 and Change Percentage Row 2
-            row = \
-            f"""<div> 
-                    <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Current Price: "}</b></span>
-                    <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
-                </div>
-            """
-            st.markdown(row, unsafe_allow_html=True)
-            row = \
-                f"""<div> 
-                        <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 2px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
-                    </div>
-                """
-            st.markdown(row, unsafe_allow_html=True)
-            
-            st.markdown('\n')
+            # row = \
+            # f"""<div> 
+            #         <span style='float: left; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:14px'><b>{"Current Price: "}</b></span>
+            #         <span style='float: right; margin-top: 0; margin-bottom: 0; line-height: 10px; font-size:18px'><b>{xPrice}</b></span>
+            #     </div>
+            # """
+            # st.markdown(row, unsafe_allow_html=True)
+            # row = \
+            #     f"""<div> 
+            #             <span style='float: right; color: {xColor}; margin-top: 0; margin-bottom: 0; line-height: 2px; font-size:14px'><b>{xChange} ({xChangePerc}%)</b></span>
+            #         </div>
+            #     """
+            # st.markdown(row, unsafe_allow_html=True)            
+            # st.markdown('\n')
+
+            xChange = xChange + ' (' + xChangePerc + '%)'
+            hdr1c.metric('Current Price', xPrice, xChange)
+
 
             # ------  After Hours Price Row 1 and Change Percentage Row 2
             if len(df_mw4) > 0:
@@ -401,7 +404,6 @@ def app():
                     xColor = 'green'
                 row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
                 st.markdown(row, unsafe_allow_html=True)
-
             #---------------  Nasdaq  -------------------
             with col3:
                 row = '<p style="font-family:sans-serif; color:RoyalBlue; margin-top: 0; margin-bottom: 5; line-height: 10px; font-size: 14px;"><b>Nasdaq</b></p>'
@@ -447,6 +449,26 @@ def app():
                     xColor = 'green'
                 row = f'<p style="font-family:sans-serif; margin-top: 0; margin-bottom: 0; color:{xColor}; font-size: 12px;"><b>{x1}</b></p>'
                 st.markdown(row, unsafe_allow_html=True)
+
+            # x1 = df_mw1.iloc[0]['Value']
+            # x2 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            # col1.metric('Dow', x1, x2)
+
+            # x1 = df_mw1.iloc[0]['Value']
+            # x2 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            # col2.metric('S&P 500', x1, x2)
+
+            # x1 = df_mw1.iloc[0]['Value']
+            # x2 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            # col3.metric('Dow', x1, x2)
+
+            # x1 = df_mw1.iloc[0]['Value']
+            # x2 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            # col4.metric('Dow', x1, x2)
+
+            # x1 = df_mw1.iloc[0]['Value']
+            # x2 = df_mw1.iloc[0]['Change'] + " (" + df_mw1.iloc[0]['Change %'] + " )"
+            # col5.metric('Dow', x1, x2)
 
     st.write ('\n\n\n\n')
 
