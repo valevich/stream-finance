@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from apps.stock_scrape1 import getData_MarketWatch
 from apps.stock_scrape1 import getData_MarketWatchDividends
 from apps.stock_scrape2 import getData_stockinvest
-from apps.stock_scrape2 import getData_dividendinvestor
 import datetime
 import yfinance as yf 
 import time
@@ -571,11 +570,28 @@ def app():
                                 if xTransPrice > 0:
                                     if xShares > 0:
                                         if st.button ('Submit'):
-                                            xDividendRate, xDividendYield, xDividendExDate, xDividendPayDate, xDividendFreq = '', '', '', '', ''
-                                            xDivList = getData_dividendinvestor(xTickerChoice)  # GET DIV PAY DATE, ETC
-                                            if xDivList:
-                                                xDividendRate, xDividendYield, xDividendExDate, xDividendPayDate, xDividendFreq = xDivList
-                                            process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, '', '', '', '', xDividendExDate, xDividendPayDate, xDividendFreq, xDividendRate)
+                                            xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
+
+                                            if ticker.info['quoteType'] == 'EQUITY':
+                                                price = ticker.info['currentPrice']
+                                                if ticker.info['dividendRate']:
+                                                    if ticker.info['dividendRate'] > 0:
+                                                        xDivList = getData_MarketWatchDividends(xTickerChoice)  # GET DIV PAY DATE, ETC
+                                                        xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                                                        xDividend = xDivAmount
+                                                else:
+                                                    xDividend = '-'
+                                            else:
+                                                price = ticker.info['regularMarketPrice']
+                                                if 'trailingAnnualDividendYield' in ticker.info:
+                                                    if ticker.info['trailingAnnualDividendYield']:
+                                                        st.write('Trailing Annual Dividend Yield: ', "%0.2f" % ticker.info['trailingAnnualDividendYield'])
+                                                    else:
+                                                        xDividend = '-'
+                                                else:
+                                                    xDividend = '-'
+
+                                            process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, '', '', '', '', xDivExDate, xDivPayDate, xDivFreq, xDivAmount)
 
                 with col3:
                     if xAction == 'Sell' or xAction == 'Buy':

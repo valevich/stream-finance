@@ -6,9 +6,14 @@ import yfinance as yf
 import os
 import pygsheets
 from google.oauth2 import service_account
-import urllib.request, json 
-import time
+# import urllib.request, json 
 from lxml import html
+
+import datetime as dt
+import time
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 
 
 #---------------------------------------------------------------------------------------#
@@ -164,6 +169,58 @@ def getData_ticker(symbol, xCurrentStopLoss):
 
     return xList
 
+
+#======================================================================================
+#                                DIVIDENDINVESTOR.COM                                 #
+#======================================================================================
+def getData_dividendinvestor(ticker):
+
+    is_prod = os.environ.get('IS_HEROKU', None)
+
+    chrome_options = Options()
+    chrome_options.headless = True
+    chrome_options.add_argument("--window-size=1920,1080")      # Required for Heroku
+    chrome_options.add_argument("disable-dev-shm-usage")        # Required for Heroku
+    os.environ['WDM_LOG_LEVEL'] = '0'                      #<----- Suppress Selenium Web Manager messages
+
+    url = f'https://www.dividendinvestor.com/dividend-quote/{ticker}/'
+    xList1 = []
+
+    driver = webdriver.Chrome(ChromeDriverManager().install(),options=chrome_options)
+    driver.get(url)
+    time.sleep(5)
+
+    try:
+        
+        element = driver.find_elements_by_tag_name("span")   # WORKING
+
+        xDivYield = element[8].text
+        xDivRate = str(element[14].text)
+
+        xDivExDate = element[36].text
+        xDivExDate = dt.datetime.strptime(xDivExDate,'%b. %d, %Y')
+        xDivExDate = str(xDivExDate.strftime('%-m/%-d/%Y'))
+
+        xDivPayDate = element[40].text
+        xDivPayDate = dt.datetime.strptime(xDivPayDate,'%b. %d, %Y')
+        xDivPayDate = str(xDivPayDate.strftime('%-m/%-d/%Y'))
+
+        xDivTimesPaid = element[46].text
+
+        xList1.append(xDivRate)
+        xList1.append(xDivYield)
+        xList1.append(xDivExDate)
+        xList1.append(xDivPayDate)
+        xList1.append(xDivTimesPaid)
+
+        return xList1
+
+
+    except Exception as e:
+        xList1 = []
+
+    finally:
+        driver.quit()
 
 
 
