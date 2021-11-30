@@ -787,10 +787,11 @@ def app():
                 st.header(f'{symbol.upper()} Fundamentals')
 
                 xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = '', '', '', '', ''
-                if ticker.info['dividendRate']:
-                    if ticker.info['dividendRate'] > 0:
-                        xDivList = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
-                        xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
+                if 'dividendRate' in ticker.info:
+                    if ticker.info['dividendRate']:
+                        if ticker.info['dividendRate'] > 0:
+                            xDivList = getData_MarketWatchDividends(symbol)  # GET DIV PAY DATE, ETC
+                            xDivExDate, xDivPayDate, xDivFreq, xDivAmount, xDivYield = xDivList
 
 
                 #---------------  Fundamentals (Equity) 2 Columns  -------------------
