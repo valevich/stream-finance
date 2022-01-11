@@ -24,6 +24,9 @@ def app():
 
     st.sidebar.markdown('---')
 
+    #------------------------------------------------------------------------------#
+    #                               DISPLAY_HEADER                                 #
+    #------------------------------------------------------------------------------#
     def display_header():
         #---------------  Header Market Data  -------------------
         symbol = 'AAPL'
@@ -112,6 +115,9 @@ def app():
 
 
 
+    #------------------------------------------------------------------------------#
+    #                                 LOAD_GSHEET                                  #
+    #------------------------------------------------------------------------------#
     # @st.cache(show_spinner=False)
     def load_gsheet(gsheet):
 
@@ -128,6 +134,9 @@ def app():
 
 
 
+    #------------------------------------------------------------------------------#
+    #                               DISPLAY_GSHEET                                 #
+    #------------------------------------------------------------------------------#
     def display_gsheet(gsheet):
         with st.spinner('Loading Data...Please Wait...'):
 
@@ -218,6 +227,9 @@ def app():
 
 
 
+    #------------------------------------------------------------------------------#
+    #                             DISPLAY_ANALYSTS                                 #
+    #------------------------------------------------------------------------------#
     def display_analysts(gsheet):
         with st.spinner('Loading Data...Please Wait...'):
 
@@ -332,6 +344,9 @@ def app():
 
 
 
+    #------------------------------------------------------------------------------#
+    #                            DISPLAY_PORTFOLIO                                 #
+    #------------------------------------------------------------------------------#
     def display_portfolio(gsheet):
         with st.spinner('Loading Data...Please Wait...'):
 
@@ -374,10 +389,18 @@ def app():
                 df2['Account'] = df2.index
                 xAccount = df2.iloc[i]['Account']
                 xTotalValue = df2.iloc[i]['TotalValue']
-                xTotalTodayPerc = df2.iloc[i]['TodayPerc']
-                xTotalToday = (xTotalValue * xTotalTodayPerc / 100)
+
+                if pd.isnull(df2.iloc[i]['TodayPerc']):
+                    xTotalTodayPerc = 0
+                    xTotalToday = 0
+                    xTotalGainLossPerc = 0
+                else:
+                    xTotalTodayPerc = df2.iloc[i]['TodayPerc']
+                    xTotalToday = (xTotalValue * xTotalTodayPerc / 100)
+                    xTotalGainLossPerc = df2.iloc[i]['GainLossPerc']
+
+
                 xTotalGainLoss = df2.iloc[i]['GainLoss']
-                xTotalGainLossPerc = df2.iloc[i]['GainLossPerc']
                 xGrandTotalValue = xGrandTotalValue + xTotalValue
                 xGrandTotalTodayPerc = xGrandTotalTodayPerc + xTotalTodayPerc
                 xGrandTotalToday = xGrandTotalToday + xTotalToday
@@ -816,6 +839,9 @@ def app():
 
 
 
+    #------------------------------------------------------------------------------#
+    #                        DISPLAY_PORTFOLIO_TOTALS                              #
+    #------------------------------------------------------------------------------#
     def display_portfolio_totals(xCntr, xAccount, xTotalValue, xTotalTodayPerc, xTotalToday, xTotalGainLoss, xTotalGainLossPerc):
 
         col0, buf, col1, col2, col3, col4, col5 = st.columns([0.7,0.1,1,1,1,1,1])
@@ -894,58 +920,11 @@ def app():
 
 
 
-    #------------------------ SAVE TRANSACTION TO GOOGLE SHEETS -----------------------#
-    # def process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, xDivExDate, xDivPayDate, xDivFreq, xDivAmount):
-
-    #     with st.spinner('Loading Data...Please Wait...'):
-
-    #         if is_prod:
-    #             gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS') # use Heroku env variable
-    #         else:    
-    #             gc = pygsheets.authorize(service_file='client_secret.json') # using service account credentials
-
-    #         sheet = gc.open('Research')
-
-    #         if xAction == 'Sell':
-    #             #------- Add Sale Transaction to Transactions Sheet ----------
-    #             wks = sheet.worksheet_by_title('Transactions')
-    #             values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Update Portfolio CASH Balance ----------
-    #             wks = sheet.worksheet_by_title('Portfolio')
-    #             for idx, row in enumerate(wks):
-    #                 if (wks[idx+1][0]) == xAccountChoice:
-    #                     xAmt = float(xTransPrice) * float(xShares)
-    #                     if (wks[idx+1][1]) == xTickerChoice:
-    #                         wks.delete_rows(idx+1, number=1)
-    #                     elif (wks[idx+1][1]) == 'CASH':
-    #                         xTot = wks[idx+1][10]
-    #                         xTot = xTot.replace('$','')
-    #                         xTot = float(xTot.replace(',',''))
-    #                         wks.cell('K'+str(idx+1)).value = str(xTot + xAmt)
-
-    #         if xAction == 'Buy':
-    #             #------- Add Sale Record to Transactions Sheet ----------
-    #             wks = sheet.worksheet_by_title('Transactions')
-    #             values = [[xAccountChoice, str(xTransDate), xAction, xTickerChoice, None, xShares, xTransPrice, None, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Add Buy Record to Portfolio Sheet ----------
-    #             wks = sheet.worksheet_by_title('Portfolio')
-    #             values = [[xAccountChoice, xTickerChoice, None, str(xTransDate), xShares, xTransPrice, None, None, None, None, None, None, None, None, xDivAmount, None, None, None, xDivExDate, xDivPayDate, xDivFreq]]
-    #             wks.append_table(values, start='A2', end=None, dimension='ROWS', overwrite=True)  # Added
-    #             #------- Update Portfolio CASH Balance ----------
-    #             for idx, row in enumerate(wks):
-    #                 if (wks[idx+1][0]) == xAccountChoice:
-    #                     xAmt = float(xTransPrice) * float(xShares)
-    #                     if (wks[idx+1][1]) == 'CASH':
-    #                         xTot = wks[idx+1][10]
-    #                         xTot = xTot.replace('$','')
-    #                         xTot = float(xTot.replace(',',''))
-    #                         wks.cell('K'+str(idx+1)).value = str(xTot - xAmt)
-
-    #         st.write('Transaction Processed!')
 
                 
+    #------------------------------------------------------------------------------#
+    #                           PROCESS_TRANSACTION                                #
+    #------------------------------------------------------------------------------#
     def process_transaction(xAction, xAccountChoice, xTickerChoice, xTransDate, xTransPrice, xShares, xPrevDate, xPrevShares, xPrevShareCost, xPrevTotalCost, xDivExDate, xDivPayDate, xDivFreq, xDivAmount):
 
         with st.spinner('Loading Data...Please Wait...'):
@@ -1002,7 +981,10 @@ def app():
 
 
 
-    #------------------  MAIN  -----------------------------
+    #------------------------------------------------------------------------------#
+    #                               START_PROCESS                                  #
+    #------------------------------------------------------------------------------#
+
     display_header()
 
     xSelection = st.sidebar.radio("Select your List", ('Watchlist','Dividends', 'Misc', 'Analysts', 'Portfolio')) 
